@@ -1,6 +1,6 @@
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
-import 'package:blazedcloud/models/pocketbase.dart';
+import 'package:blazedcloud/models/pocketbase/authstore.dart';
 import 'package:blazedcloud/pages/dashboard.dart';
 import 'package:blazedcloud/pages/login/login.dart';
 import 'package:blazedcloud/pages/login/signup.dart';

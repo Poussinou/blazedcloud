@@ -1,6 +1,5 @@
+import 'package:blazedcloud/models/pocketbase/authstore.dart';
 import 'package:pocketbase/pocketbase.dart';
-
-import 'models/pocketbase.dart';
 
 // localhost
 //const String backendUrl = "http://10.0.2.2:8090";

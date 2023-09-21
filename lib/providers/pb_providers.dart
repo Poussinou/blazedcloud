@@ -1,4 +1,4 @@
-import 'package:blazedcloud/models/pocketbase.dart';
+import 'package:blazedcloud/models/pocketbase/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final accountUserProvider =
