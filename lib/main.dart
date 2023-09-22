@@ -131,38 +131,37 @@ class LoginScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('NAF Project'),
-        ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text("Blazed Cloud",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 50)),
-              Lottie.asset("assets/lottie/fire.json", repeat: true),
-              ElevatedButton(
-                onPressed: () {
-                  context.pushNamed('login');
-                },
-                style: const ButtonStyle(),
-                child: const Text(
-                  'Login',
-                  style: TextStyle(fontSize: 30),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {},
-                style: const ButtonStyle(),
-                child: const Text(
-                  'Sign up',
-                  style: TextStyle(fontSize: 30),
-                ),
-              ),
-            ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text("Blazed Cloud",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 50)),
+          Lottie.asset("assets/lottie/fire.json", repeat: true),
+          ElevatedButton(
+            onPressed: () {
+              context.pushNamed('login');
+            },
+            style: const ButtonStyle(),
+            child: const Text(
+              'Login',
+              style: TextStyle(fontSize: 30),
+            ),
           ),
-        ));
+          ElevatedButton(
+            onPressed: () {
+              context.pushNamed('signup');
+            },
+            style: const ButtonStyle(),
+            child: const Text(
+              'Sign up',
+              style: TextStyle(fontSize: 30),
+            ),
+          ),
+        ],
+      ),
+    ));
   }
 }
 

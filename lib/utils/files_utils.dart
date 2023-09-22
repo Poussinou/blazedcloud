@@ -117,6 +117,10 @@ String getFolderName(String folderKey) {
 }
 
 List<String> getKeysFromList(ListBucketResult list, bool keepStartingDir) {
+  if (list.contents == null) {
+    return [];
+  }
+
   List<String> keys = [];
   for (var item in list.contents!) {
     final key = item.key;

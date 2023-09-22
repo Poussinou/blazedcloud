@@ -98,7 +98,7 @@ class ListBucketResult {
     if (json['Contents'] != null) {
       contents = <Contents>[];
       json['Contents'].forEach((v) {
-        contents!.add(Contents.fromJson(v));
+        contents?.add(Contents.fromJson(v));
       });
     }
     name = json['Name'];
@@ -108,7 +108,7 @@ class ListBucketResult {
     if (json['CommonPrefixes'] != null) {
       commonPrefixes = <CommonPrefixes>[];
       json['CommonPrefixes'].forEach((v) {
-        commonPrefixes!.add(CommonPrefixes.fromJson(v));
+        commonPrefixes?.add(CommonPrefixes.fromJson(v));
       });
     }
     encodingType = json['EncodingType'];

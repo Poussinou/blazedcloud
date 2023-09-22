@@ -13,7 +13,7 @@ class LoginScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login Page'),
+        title: const Text('Login'),
       ),
       body: Center(
         child: Column(
@@ -58,6 +58,10 @@ class LoginScreen extends ConsumerWidget {
                   if (pb.authStore.isValid) {
                     context.go('/dashboard');
                   }
+                }).onError((error, stackTrace) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Invalid email or password")));
+                  return null;
                 });
               },
               child: const Text('Login'),
