@@ -66,8 +66,59 @@ class LoginScreen extends ConsumerWidget {
               },
               child: const Text('Login'),
             ),
+
+            // password reset button
+            TextButton(
+              onPressed: () {
+                showPasswordResetDialog(context);
+              },
+              child: const Text('Forgot password?'),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void showPasswordResetDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset password'),
+        content: TextField(
+          decoration: const InputDecoration(
+            labelText: 'Email',
+          ),
+          onChanged: (value) {
+            emailController.text = value;
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // send password reset email
+              pb
+                  .collection('users')
+                  .requestPasswordReset(emailController.text)
+                  .then((value) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Password reset email sent!")));
+                Navigator.of(context).pop();
+              }).onError((error, stackTrace) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Error sending password reset email")));
+                return null;
+              });
+            },
+            child: const Text('Send'),
+          ),
+        ],
       ),
     );
   }
