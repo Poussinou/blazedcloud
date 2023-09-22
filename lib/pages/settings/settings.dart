@@ -120,7 +120,7 @@ class SettingsScreen extends ConsumerWidget {
                               .delete(key: 'key')
                               .then((value) {
                             pb.authStore.clear();
-                            context.go('/');
+                            context.go('/landing');
                           });
                         }
                       });
