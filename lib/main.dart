@@ -68,65 +68,8 @@ final _router = GoRouter(
   ],
 );
 
-class LandingPage extends ConsumerWidget {
-  const LandingPage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // check server health then check if user is logged in
-    return ref.watch(healthCheckProvider).when(
-      data: (data) {
-        return ref.watch(savedAuthProvider).when(
-          data: (data) {
-            if (data) {
-              logger.i("Token is valid. User: ${pb.authStore.model.id}");
-              return const Dashboard();
-            } else {
-              return const LoginScaffold();
-            }
-          },
-          loading: () {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          },
-          error: (err, stack) {
-            logger.i("Error loading saved auth: $err");
-
-            // clear saved auth
-            Hive.deleteBoxFromDisk('vaultBox');
-            Hive.deleteBoxFromDisk('points');
-            Hive.deleteBoxFromDisk('history');
-            const FlutterSecureStorage().delete(key: 'key');
-
-            return const LoginScaffold();
-          },
-        );
-      },
-      loading: () {
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
-      error: (err, stack) {
-        logger.i("Server Health check failed: $err");
-        return const Scaffold(
-          body: Center(
-            child: Text(
-                "Authentication Server is currently undergoing routine maintenance"),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class LoginScaffold extends StatelessWidget {
-  const LoginScaffold({super.key});
+class LandingContent extends StatelessWidget {
+  const LandingContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +105,61 @@ class LoginScaffold extends StatelessWidget {
         ],
       ),
     ));
+  }
+}
+
+class LandingPage extends ConsumerWidget {
+  const LandingPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // check server health then check if user is logged in
+    return ref.watch(healthCheckProvider).when(
+      data: (data) {
+        return ref.watch(savedAuthProvider).when(
+          data: (data) {
+            if (data) {
+              logger.i("Token is valid. User: ${pb.authStore.model.id}");
+              return const Dashboard();
+            } else {
+              return const LandingContent();
+            }
+          },
+          loading: () {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          },
+          error: (err, stack) {
+            logger.i("Error loading saved auth: $err");
+
+            // clear saved auth
+            Hive.deleteBoxFromDisk('vaultBox');
+            const FlutterSecureStorage().delete(key: 'key');
+
+            return const LandingContent();
+          },
+        );
+      },
+      loading: () {
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+      error: (err, stack) {
+        logger.i("Server Health check failed: $err");
+        return const Scaffold(
+          body: Center(
+            child: Text(
+                "Authentication Server is currently undergoing routine maintenance"),
+          ),
+        );
+      },
+    );
   }
 }
 

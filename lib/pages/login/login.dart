@@ -1,4 +1,5 @@
 import 'package:blazedcloud/constants.dart';
+import 'package:blazedcloud/log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -111,6 +112,7 @@ class LoginScreen extends ConsumerWidget {
                     content: Text("Password reset email sent!")));
                 Navigator.of(context).pop();
               }).onError((error, stackTrace) {
+                logger.e("Error sending password reset email: $error");
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("Error sending password reset email")));
                 return null;

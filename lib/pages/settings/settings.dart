@@ -1,27 +1,23 @@
 import 'package:babstrap_settings_screen/babstrap_settings_screen.dart';
 import 'package:blazedcloud/constants.dart';
+import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/main.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsGroup.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsItem.dart';
 import 'package:blazedcloud/providers/pb_providers.dart';
-import 'package:blazedcloud/providers/setting_providers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    SharedPreferences prefs;
-    SharedPreferences.getInstance().then((value) => {
-          prefs = value,
-        });
     final userData = ref.watch(accountUserProvider(pb.authStore.model.id));
     final isPremium = ref.watch(premiumProvider);
 
@@ -40,59 +36,55 @@ class SettingsScreen extends ConsumerWidget {
                 items: [
                   CustomSettingsItem(
                     onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Change Name'),
-                            content: TextFormField(
-                              decoration: const InputDecoration(
-                                hintText: 'Enter your name',
-                              ),
-                              initialValue:
-                                  ref.read(nameProvider.notifier).state,
-                              onChanged: (value) =>
-                                  ref.read(nameProvider.notifier).state = value,
-                            ),
-                            actions: [
-                              TextButton(
-                                child: const Text('CANCEL'),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                              TextButton(
-                                child: const Text('SAVE'),
-                                onPressed: () => Navigator.of(context)
-                                    .pop(ref.read(nameProvider.notifier).state),
-                              ),
-                            ],
-                          );
-                        },
-                      ).then((value) async {
-                        if (value != null) {
-                          // update name in pocketbase
-                          try {
-                            await pb
-                                .collection('users')
-                                .update(pb.authStore.model.id, body: {
-                              'username': value,
-                            });
-                            ref.invalidate(
-                                accountUserProvider(pb.authStore.model.id));
-                          } catch (e) {
-                            // show snackbar
+                      HapticFeedback.mediumImpact();
+                      userData.whenData((value) => pb
+                              .collection('users')
+                              .requestPasswordReset(pb.authStore.model.email)
+                              .then((value) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Failed to update name'),
-                              ),
-                            );
-                          }
-                        }
-                      });
+                                const SnackBar(
+                                    content:
+                                        Text("Password reset email sent!")));
+                            Navigator.of(context).pop();
+                          }).onError((error, stackTrace) {
+                            logger.e(
+                                "Error sending password reset email: $error");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        "Error sending password reset email")));
+                            return null;
+                          }));
                     },
-                    icons: CupertinoIcons.person,
+                    icons: CupertinoIcons.lock_shield_fill,
                     iconStyle: IconStyle(),
-                    title: 'Change Name',
-                    subtitle: "Help friends identify you",
+                    title: 'Change Password',
+                    subtitle:
+                        "Will send a link to your email to reset your password",
+                  ),
+                  CustomSettingsItem(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      userData.whenData((value) => pb
+                              .collection('users')
+                              .requestEmailChange(pb.authStore.model.email)
+                              .then((value) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Request Sent!")));
+                            Navigator.of(context).pop();
+                          }).onError((error, stackTrace) {
+                            logger.e("Error sending request: $error");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Error sending request")));
+                            return null;
+                          }));
+                    },
+                    icons: CupertinoIcons.at,
+                    iconStyle: IconStyle(),
+                    title: 'Change Email',
+                    subtitle:
+                        "Will send a link to your email to complete the change",
                   ),
                 ],
               ),
@@ -124,8 +116,6 @@ class SettingsScreen extends ConsumerWidget {
                         if (value != null) {
                           // sign out
                           await Hive.deleteBoxFromDisk('vaultBox');
-                          await Hive.deleteBoxFromDisk('points');
-                          await Hive.deleteBoxFromDisk('history');
                           await const FlutterSecureStorage()
                               .delete(key: 'key')
                               .then((value) {
@@ -170,7 +160,7 @@ class SettingsScreen extends ConsumerWidget {
                                 .collection('users')
                                 .delete(pb.authStore.model.id);
                             pb.authStore.clear();
-                            context.go('/');
+                            context.go('/landing');
 
                             // show dialog
                             showDialog(
