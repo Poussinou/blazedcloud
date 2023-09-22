@@ -12,7 +12,7 @@ class ShareScreen extends ConsumerWidget {
           title: const Text('Sharing'),
         ),
         body: const Column(
-          children: [UsageCard(usageGB: 2.2, capacityGB: 5)],
+          children: [UsageCard()],
         ));
   }
 }

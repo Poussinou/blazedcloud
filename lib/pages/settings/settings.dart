@@ -32,6 +32,23 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              userData.when(
+                data: (data) => CustomSettingsGroup(items: [
+                  CustomSettingsItem(
+                    onTap: () {},
+                    icons: CupertinoIcons.eyeglasses,
+                    iconStyle: IconStyle(backgroundColor: Colors.red),
+                    title: 'Client-side encryption key',
+                    subtitle: 'Encrypt files locally before upload',
+                    trailing: const SizedBox.shrink(),
+                  )
+                ]),
+                loading: () => const SizedBox.shrink(),
+                error: (err, stack) {
+                  logger.e("Error loading user data: $err");
+                  return const SizedBox.shrink();
+                },
+              ),
               CustomSettingsGroup(
                 items: [
                   CustomSettingsItem(
@@ -58,6 +75,7 @@ class SettingsScreen extends ConsumerWidget {
                     },
                     icons: CupertinoIcons.lock_shield_fill,
                     iconStyle: IconStyle(),
+                    trailing: const SizedBox.shrink(),
                     title: 'Change Password',
                     subtitle:
                         "Will send a link to your email to reset your password",
@@ -81,6 +99,7 @@ class SettingsScreen extends ConsumerWidget {
                           }));
                     },
                     icons: CupertinoIcons.at,
+                    trailing: const SizedBox.shrink(),
                     iconStyle: IconStyle(),
                     title: 'Change Email',
                     subtitle:
@@ -126,6 +145,7 @@ class SettingsScreen extends ConsumerWidget {
                       });
                     },
                     icons: Icons.exit_to_app_rounded,
+                    trailing: const SizedBox.shrink(),
                     title: "Sign Out",
                   ),
                   CustomSettingsItem(
@@ -193,6 +213,7 @@ class SettingsScreen extends ConsumerWidget {
                     },
                     icons: CupertinoIcons.delete_solid,
                     title: "Delete account",
+                    trailing: const SizedBox.shrink(),
                     titleStyle: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,

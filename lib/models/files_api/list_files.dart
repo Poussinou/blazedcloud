@@ -21,7 +21,7 @@ class Contents {
   String? lastModified;
   Owner? owner;
   RestoreStatus? restoreStatus;
-  int? size;
+  int? size; // in bytes
   String? storageClass;
 
   Contents(

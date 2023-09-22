@@ -63,7 +63,6 @@ class FilesPage extends ConsumerWidget {
                 if (index < folderList.length) {
                   // Render folder items
                   String folderKey = folderList[index];
-                  logger.i("Rendering folder item: $folderKey");
 
                   if ("$folderKey/" != currentDirectory &&
                       isKeyInDirectory(folderKey, true, currentDirectory)) {

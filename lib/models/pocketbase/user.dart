@@ -1,8 +1,9 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:convert';
 
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class User {
   String id;
@@ -15,6 +16,11 @@ class User {
   String created;
   String updated;
   List<String> sharing;
+  bool active;
+  String glassfy;
+  int capacity_gigs;
+  bool usingPersonalEncryption;
+  String personalEncryptionHashes;
 
   User({
     this.id = "",
@@ -27,18 +33,12 @@ class User {
     this.created = "",
     this.updated = "",
     this.sharing = const [],
+    this.active = false,
+    this.glassfy = "",
+    this.capacity_gigs = 5,
+    this.usingPersonalEncryption = false,
+    this.personalEncryptionHashes = "",
   });
-
-  // We are manually parsing the json for now to get the friends
-  // using this for loading friend request only for now
-  factory User.fromJson(dynamic json, RecordModel record) {
-    logger.i("User from json: ${jsonEncode(json)}");
-    return User(
-      id: json['id'],
-      username: json['username'],
-      sharing: json['sharing'],
-    );
-  }
 
   // delete user
   Future<bool> deleteUser() async {
@@ -62,6 +62,12 @@ class User {
       created: result.getStringValue('created'),
       updated: result.getStringValue('updated'),
       sharing: result.getListValue('sharing'),
+      active: result.getBoolValue('active'),
+      glassfy: result.getStringValue('glassfy'),
+      capacity_gigs: result.getIntValue('capacity_gigs'),
+      usingPersonalEncryption: result.getBoolValue('usingPersonalEncryption'),
+      personalEncryptionHashes:
+          result.getStringValue('personalEncryptionHashes'),
     );
   }
 
@@ -76,5 +82,10 @@ class User {
         'created': created,
         'updated': updated,
         'sharing': sharing,
+        'active': active,
+        'glassfy': glassfy,
+        'capacity_gigs': capacity_gigs,
+        'usingPersonalEncryption': usingPersonalEncryption,
+        'personalEncryptionHashes': personalEncryptionHashes,
       };
 }

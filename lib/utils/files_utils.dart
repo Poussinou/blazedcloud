@@ -11,6 +11,25 @@ import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
+num computeTotalSizeGb(ListBucketResult list) {
+  if (list.contents == null) {
+    return 0;
+  }
+  logger.i('Computing total size of ${list.contents!.length} items');
+
+  num totalSize = 0;
+  for (var item in list.contents!) {
+    totalSize += item.size!;
+  }
+
+  // convert to GB from bytes
+  logger.i('Total size: $totalSize bytes');
+  totalSize = totalSize / 1000000000;
+  logger.i('Total size: $totalSize GB');
+
+  return totalSize;
+}
+
 /// Creates a folder with a placeholder file so that it is visible in the file list.
 Future<bool> createFolder(String folderKey) async {
   // upload a file with the name folderKey + "/.blazed-placeholder"
@@ -90,6 +109,10 @@ FileType getFileType(String fileName) {
 }
 
 List<String> getFolderList(ListBucketResult list) {
+  if (list.contents == null) {
+    return [];
+  }
+
   Set<String> folderKeys = {};
   List<String> keys = getKeysFromList(list, true);
 
@@ -194,7 +217,6 @@ bool isFolderInDirectory(String key, String workingDir) {
 }
 
 bool isKeyInDirectory(String key, bool folder, String workingDir) {
-  logger.i('Checking if $key is in $workingDir');
   if (folder) {
     // remove the last segment of the key
     if (key.endsWith('/')) {
