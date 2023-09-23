@@ -1,12 +1,18 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
+import 'package:blazedcloud/models/files_api/encrypted_stream.dart';
 import 'package:blazedcloud/models/files_api/list_files.dart';
 import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:blazedcloud/services/files_api.dart';
+import 'package:crypto/crypto.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:file_picker/file_picker.dart' as fp;
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -38,6 +44,91 @@ Future<bool> createFolder(String folderKey) async {
   await uploadFile(pb.authStore.model.id, filename,
       http.ByteStream.fromBytes(Uint8List(0)), 0, pb.authStore.token);
   return true;
+}
+
+Future<http.ByteStream> decryptByteStream(
+    http.ByteStream encryptedStream, String encryptionKey) async {
+  // Hash the encryptionKey using SHA-512
+  final keyHash =
+      Uint8List.fromList(sha512.convert(utf8.encode(encryptionKey)).bytes);
+
+  // Use the first 32 bytes (256 bits) of the SHA-512 hash as the decryption key
+  final key = Key(Uint8List.fromList(keyHash.sublist(0, 32)));
+  final iv = IV.fromLength(16); // Initialization Vector
+
+  final encrypter = Encrypter(AES(key, mode: AESMode.cbc));
+
+  final decryptedStreamController = StreamController<List<int>>();
+  final decryptedSink = decryptedStreamController.sink;
+
+  try {
+    await for (final chunk in encryptedStream) {
+      final decryptedChunk = encrypter.decryptBytes(
+        Encrypted.fromBase64(base64Encode(chunk)),
+        iv: iv,
+      );
+      decryptedSink.add(decryptedChunk);
+    }
+  } catch (e) {
+    decryptedStreamController.addError(e);
+  } finally {
+    decryptedSink.close();
+  }
+
+  // Create a StreamTransformer to convert the Stream<List<int>> to http.ByteStream
+  final transformer = StreamTransformer<List<int>, List<int>>.fromHandlers(
+    handleData: (data, sink) {
+      sink.add(data);
+    },
+  );
+
+  final decryptedStream =
+      decryptedStreamController.stream.transform(transformer);
+
+  return http.ByteStream(decryptedStream);
+}
+
+Future<EncryptedStreamResult> encryptByteStream(
+    http.ByteStream originalStream, String encryptionKey) async {
+  // Hash the encryptionKey using SHA-512
+  final keyHash =
+      Uint8List.fromList(sha512.convert(utf8.encode(encryptionKey)).bytes);
+
+  // Use the first 32 bytes (256 bits) of the SHA-512 hash as the encryption key
+  final key = Key(Uint8List.fromList(keyHash.sublist(0, 32)));
+  final iv = IV.fromLength(16); // Initialization Vector
+
+  final encrypter = Encrypter(AES(key, mode: AESMode.cbc));
+
+  final encryptedStreamController = StreamController<List<int>>();
+  final encryptedSink = encryptedStreamController.sink;
+  int totalByteLength = 0; // Initialize the total byte length
+
+  try {
+    await for (final chunk in originalStream) {
+      final encryptedChunk = encrypter.encryptBytes(chunk, iv: iv);
+      final encryptedBytes = encryptedChunk.bytes;
+      totalByteLength += encryptedBytes.length; // Update the total byte length
+      encryptedSink.add(encryptedBytes);
+    }
+  } catch (e) {
+    encryptedStreamController.addError(e);
+  } finally {
+    encryptedSink.close();
+  }
+
+  // Create a StreamTransformer to convert the Stream<List<int>> to http.ByteStream
+  final transformer = StreamTransformer<List<int>, List<int>>.fromHandlers(
+    handleData: (data, sink) {
+      sink.add(data);
+    },
+  );
+
+  final encryptedStream =
+      encryptedStreamController.stream.transform(transformer);
+
+  return EncryptedStreamResult(
+      http.ByteStream(encryptedStream), totalByteLength);
 }
 
 List<String> fuzzySearch(String query, List<String> list) {
@@ -72,6 +163,24 @@ List<String> fuzzySearch(String query, List<String> list) {
       .toList();
 
   return filteredResults;
+}
+
+// function to prompt user to select folder to store files at, and save the path to Hive
+Future<void> getDownloadDirectory() async {
+  final result = await fp.FilePicker.platform.getDirectoryPath();
+
+  if (result != null) {
+    // User selected a directory
+    logger.i('Directory selected: $result');
+
+    // save to Hive
+    Hive.openBox<String>('files').then((box) {
+      box.put('downloadDirectory', result);
+    });
+  } else {
+    // User canceled the picker
+    logger.i('User canceled directory picker');
+  }
 }
 
 getFileDirectory(String key) {
