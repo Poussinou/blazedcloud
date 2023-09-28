@@ -50,12 +50,12 @@ dependencies:
   path_provider: ^2.1.1
   file_picker: ^5.5.0
   flutter_local_notifications: ^15.1.1
-  url_launcher: ^6.1.14
   android_intent_plus: ^4.0.2
   package_info_plus: ^4.1.0
   open_filex: ^4.3.2
   encrypt: ^5.0.3
   crypto: ^3.0.3
+  permission_handler: ^11.0.0
 
 dev_dependencies:
   flutter_test:

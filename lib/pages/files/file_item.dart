@@ -47,15 +47,13 @@ void downloadItem(String fileKey, DownloadController downloadController) {
   HapticFeedback.vibrate();
 }
 
-void saveItem(String fileKey, WidgetRef ref) {
+void openItem(String fileKey, WidgetRef ref) {
   isFileSavedOffline(fileKey).then((isOffline) {
     if (isOffline ||
         !isFileBeingDownloaded(fileKey, ref.read(downloadStateProvider))) {
       getOfflineFile(fileKey).then((file) {
-        logger.i('Opening file: ${file.path}');
         try {
-          //launchUrl(Uri.parse("file://${file.path}"),
-          //    mode: LaunchMode.externalNonBrowserApplication);
+          logger.i('Opening file: ${file.path}');
           openFile(file);
         } catch (e) {
           logger.e('Error opening file: $e');
@@ -119,7 +117,7 @@ class FileItem extends ConsumerWidget {
           ],
           onSelected: (value) {
             if (value == 'open') {
-              saveItem(fileKey, ref);
+              openItem(fileKey, ref);
             } else if (value == 'save') {
               downloadItem(fileKey, downloadController);
             } else if (value == 'delete') {

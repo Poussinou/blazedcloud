@@ -1,3 +1,5 @@
+import 'package:blazedcloud/log.dart';
+
 class DownloadState {
   bool isDownloading;
   bool isError;
@@ -35,6 +37,7 @@ class DownloadState {
   void setError(String errorMessage) {
     isError = true;
     this.errorMessage = errorMessage;
+    logger.e(errorMessage);
   }
 
   void updateProgress(double newProgress) {

@@ -47,7 +47,7 @@ class SearchItem extends ConsumerWidget {
             ],
             onSelected: (value) {
               if (value == 'open') {
-                saveItem(fileKey, ref);
+                openItem(fileKey, ref);
               } else if (value == 'save') {
                 downloadItem(fileKey, downloadController);
               } else if (value == 'delete') {

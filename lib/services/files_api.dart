@@ -91,8 +91,7 @@ Future<ListBucketResult> getFilelist(
 }
 
 /// don't call directly. use uploadFile
-Future<String> getUploadUrl(
-    String uid, String filename, int length, String token) async {
+Future<String> getUploadUrl(String uid, String filename, String token) async {
   var headers = {'Authorization': 'Bearer $token'};
   var request =
       http.MultipartRequest('POST', Uri.parse('$backendUrl/data/up/$uid'));
@@ -116,12 +115,12 @@ Future<String> getUploadUrl(
 
 /// use this to upload files directly. it will get the upload url and upload the file.
 /// exclude the uid from the filename, it is added automatically
-Future<http.StreamedResponse> uploadFile(String uid, String fileKey,
-    http.ByteStream bytes, int length, String token) async {
+Future<http.StreamedResponse> uploadFile(
+    String uid, String fileKey, http.ByteStream bytes, String token) async {
   logger.i("Uploading file $fileKey");
 
-  return await getUploadUrl(uid, fileKey, length, token)
-      .then((value) => uploadToUrl(value, fileKey, bytes, length));
+  return await getUploadUrl(uid, fileKey, token)
+      .then((value) => uploadToUrl(value, fileKey, bytes));
 }
 
 /// don't call directly. use uploadFile
@@ -129,7 +128,6 @@ Future<http.StreamedResponse> uploadToUrl(
   String url,
   String filename,
   http.ByteStream bytes,
-  int length,
 ) async {
   logger.i("Uploading file $filename to $url");
   try {
@@ -137,7 +135,7 @@ Future<http.StreamedResponse> uploadToUrl(
     request.files.add(http.MultipartFile(
       'file',
       bytes,
-      length,
+      await bytes.length,
       filename: filename,
     ));
 

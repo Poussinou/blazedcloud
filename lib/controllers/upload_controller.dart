@@ -35,8 +35,7 @@ class UploadController {
 
   Future<void> startUpload(
       String uid, File fileToUpload, String directory) async {
-    final uploadState = UploadState.inProgress(
-        fileToUpload.path); // Update with the correct upload key
+    final uploadState = UploadState.inProgress(fileToUpload.path);
     final uploadNotifier = _ref.read(uploadStateProvider.notifier);
     final int index = uploadNotifier.addUpload(uploadState);
 
@@ -51,9 +50,11 @@ class UploadController {
         uid,
         fileKey,
         bytes,
-        totalBytes,
         token,
       );
+
+      NotificationService().initNotification().then((_) => NotificationService()
+          .showUploadNotification(NotificationService().uploads + 1));
 
       // Add a progress callback to the response stream
       response.stream.listen(
@@ -74,6 +75,10 @@ class UploadController {
           // Handle any errors during the upload
           uploadState.setError(error.toString());
           uploadNotifier.updateUploadState(index, uploadState);
+
+          NotificationService().initNotification().then((_) =>
+              NotificationService()
+                  .showUploadNotification(NotificationService().uploads - 1));
         },
         onDone: () {
           logger.i('Upload done');
@@ -84,23 +89,15 @@ class UploadController {
 
           // Update the file list
           _ref.invalidate(fileListProvider);
+
+          NotificationService().initNotification().then((_) =>
+              NotificationService()
+                  .showUploadNotification(NotificationService().uploads - 1));
         },
+        cancelOnError: true,
       );
-
-      final uploadStates = _ref.watch(uploadStateProvider);
-
-      final activeUploads =
-          uploadStates.where((state) => state.isUploading).toList();
-
-      if (activeUploads.isNotEmpty) {
-        NotificationService().initNotification().then((_) =>
-            NotificationService().showUploadNotification(activeUploads.length));
-      }
     } catch (error) {
-      // Handle upload error
       uploadState.setError(error.toString());
-
-      // Update the upload state with the error
       uploadNotifier.updateUploadState(index, uploadState);
     }
   }

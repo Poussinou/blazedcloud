@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:blazedcloud/constants.dart';
+import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';
 import 'package:blazedcloud/services/notifications.dart';
+import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 class DownloadController {
   final ProviderRef<Object> _ref;
@@ -25,11 +26,11 @@ class DownloadController {
       final response = await getFile(uid, fileKey, token);
 
       // Get the app's internal storage directory
-      final appDocDir = await getApplicationDocumentsDirectory();
-      final filePath = '${appDocDir.path}/$fileKey'; // Define the file path
+      final appDocDir = await geExportDirectory();
+      final filePath = '$appDocDir/$fileKey'; // Define the file path
 
       // Ensure the directory exists
-      final directory = Directory(appDocDir.path);
+      final directory = Directory(appDocDir);
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
@@ -88,6 +89,8 @@ class DownloadController {
                 .showDownloadNotification(activeDownloads.length));
       }
     } catch (error) {
+      logger.e('Download error: $error');
+
       // Handle download error
       downloadState.setError(error.toString());
 

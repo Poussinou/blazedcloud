@@ -1,5 +1,6 @@
 import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:blazedcloud/models/transfers/upload_state.dart';
+import 'package:blazedcloud/pages/settings/usage_card.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/material.dart';
@@ -16,8 +17,15 @@ class TransfersPage extends ConsumerWidget {
 
     return ListView.builder(
       itemCount: transfers.length,
+      shrinkWrap: true,
+      physics: const AlwaysScrollableScrollPhysics(),
       itemBuilder: (context, index) {
         final transfer = transfers[index];
+
+        // display usage card at the top of the list
+        if (index == 0) {
+          return const UsageCard();
+        }
 
         if (transfer is DownloadState) {
           return Card(
@@ -35,11 +43,13 @@ class TransfersPage extends ConsumerWidget {
                           : const Text('Downloaded'),
                 ],
               ),
+              leading: const Icon(Icons.download_rounded),
             ),
           );
         } else if (transfer is UploadState) {
           return Card(
             child: ListTile(
+              leading: const Icon(Icons.upload_rounded),
               title: Text(getFileName(transfer.uploadKey)),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
