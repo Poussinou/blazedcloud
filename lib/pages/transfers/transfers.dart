@@ -15,6 +15,18 @@ class TransfersPage extends ConsumerWidget {
     final uploadStates = ref.watch(uploadStateProvider);
     final transfers = [...downloadStates, ...uploadStates];
 
+    if (transfers.isEmpty) {
+      return const Wrap(
+        children: [
+          Center(
+            child: Column(
+              children: [UsageCard(), Text('No active transfers')],
+            ),
+          ),
+        ],
+      );
+    }
+
     return ListView.builder(
       itemCount: transfers.length,
       shrinkWrap: true,
