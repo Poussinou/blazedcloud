@@ -53,7 +53,7 @@ Future<bool> createFolder(String folderKey) async {
   final filename = '$folderKey/.blazed-placeholder';
 
   await uploadFile(pb.authStore.model.id, filename,
-      http.ByteStream.fromBytes(Uint8List(0)), pb.authStore.token);
+      http.ByteStream.fromBytes(Uint8List(0)), pb.authStore.token, 0);
   return true;
 }
 
@@ -391,6 +391,23 @@ List<String> getKeysFromList(ListBucketResult list, bool keepStartingDir) {
   return keys;
 }
 
+List<String> getKeysInFolder(ListBucketResult list, String folderKey) {
+  if (list.contents == null) {
+    return [];
+  }
+
+  List<String> keys = [];
+  for (var item in list.contents!) {
+    final key = item.key;
+
+    // remove the starting directory from the key
+    if (key!.startsWith(folderKey)) {
+      keys.add(key.substring(folderKey.length));
+    }
+  }
+  return keys;
+}
+
 Future<File> getOfflineFile(String filename) async {
   // Get the directory for the app's internal storage
   final directory = await geExportDirectory();
@@ -435,13 +452,13 @@ bool isFileBeingDownloaded(String file, List<DownloadState> downloads) {
 Future<bool> isFileSavedOffline(String filename) async {
   // Get the directory for the app's internal storage
   //final directory = await getApplicationDocumentsDirectory();
-  final directory = geExportDirectory();
+  final directory = await geExportDirectory();
 
   // Construct the file path using the filename
   final filePath = File('$directory/$filename');
 
   // Check if the file exists
-  return filePath.existsSync();
+  return filePath.exists();
 }
 
 bool isFolderInDirectory(String key, String workingDir) {
@@ -462,13 +479,14 @@ bool isKeyInDirectory(String key, bool folder, String workingDir) {
       !key.substring(workingDir.length).contains('/');
 }
 
-void openFile(File file) {
+bool openFile(File file) {
   if (!file.existsSync()) {
     logger.e('File does not exist: ${file.path}');
-    return;
+    return false;
   }
 
   OpenFilex.open(file.path);
+  return true;
 }
 
 enum FileType { image, video, audio, doc, other, folder }

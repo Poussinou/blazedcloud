@@ -18,70 +18,67 @@ class UploadController {
   UploadController(this._ref);
 
   void selectFilesToUpload(String directory) async {
-    final file = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      type: FileType.any,
-    );
+    final selection = await FilePicker.platform.pickFiles(
+        allowMultiple: true, type: FileType.any, withReadStream: true);
 
-    if (file != null) {
-      final files = file.paths.map((path) => File(path!)).toList();
+    if (selection != null) {
       final uid = pb.authStore.model.id;
 
-      for (final fileToUpload in files) {
+      for (final fileToUpload in selection.files) {
         startUpload(uid, fileToUpload, directory);
       }
     }
   }
 
+  // TODO: move some of the logic to file_api.dart
   Future<void> startUpload(
-      String uid, File fileToUpload, String directory) async {
-    final uploadState = UploadState.inProgress(fileToUpload.path);
+      String uid, PlatformFile platformFile, String directory) async {
+    final uploadState = UploadState.inProgress(platformFile.path!);
     final uploadNotifier = _ref.read(uploadStateProvider.notifier);
+    final file = File(platformFile.path!);
     final int index = uploadNotifier.addUpload(uploadState);
 
     final token = pb.authStore.token;
-    final fileKey = '$directory${fileToUpload.path.split('/').last}';
+    final fileKey = '$directory${platformFile.name}';
 
     try {
-      final totalBytes = fileToUpload.lengthSync();
-      final bytes = http.ByteStream(fileToUpload.openRead());
+      final totalBytes = platformFile.size;
 
-      final response = await uploadFile(
-        uid,
-        fileKey,
-        bytes,
-        token,
-      );
+      final uploadUrl = await getUploadUrl(uid, fileKey, token);
+      logger.i('Upload url: $uploadUrl');
 
-      NotificationService().initNotification().then((_) => NotificationService()
-          .showUploadNotification(NotificationService().uploads + 1));
+      // create request
+      final request = http.StreamedRequest("PUT", Uri.parse(uploadUrl));
+      final bytes = platformFile.readStream!.asBroadcastStream();
+
+      updateUploadNotification();
 
       // Add a progress callback to the response stream
-      response.stream.listen(
+      bytes.listen(
         (data) {
           // Calculate progress and update the upload state
-          final sent = data.length;
+          uploadState.addTotalSent(data.length);
+          final sent = uploadState.sent;
           final progress = sent / totalBytes;
           uploadState.updateProgress(progress);
-
-          logger.i('Upload progress: $progress');
 
           // Update the upload state with the updated progress
           uploadNotifier.updateUploadState(index, uploadState);
         },
         onError: (error) {
           logger.e('Upload error: $error');
+          request.sink.close();
 
           // Handle any errors during the upload
           uploadState.setError(error.toString());
+          uploadState.completed();
           uploadNotifier.updateUploadState(index, uploadState);
 
-          NotificationService().initNotification().then((_) =>
-              NotificationService()
-                  .showUploadNotification(NotificationService().uploads - 1));
+          updateUploadNotification();
         },
         onDone: () {
           logger.i('Upload done');
+          request.sink.close();
 
           // Handle upload completion
           uploadState.completed();
@@ -90,15 +87,31 @@ class UploadController {
           // Update the file list
           _ref.invalidate(fileListProvider);
 
-          NotificationService().initNotification().then((_) =>
-              NotificationService()
-                  .showUploadNotification(NotificationService().uploads - 1));
+          updateUploadNotification();
         },
-        cancelOnError: true,
       );
+
+      request.contentLength = totalBytes;
+      request.sink.addStream(bytes);
+      final response = await httpClient.send(request);
+      logger.d(
+          'Upload response: ${response.statusCode} \n ${response.reasonPhrase}');
     } catch (error) {
+      logger.e('Upload error: $error');
+
       uploadState.setError(error.toString());
+      uploadState.completed();
       uploadNotifier.updateUploadState(index, uploadState);
+
+      updateUploadNotification();
     }
+  }
+
+  void updateUploadNotification() {
+    NotificationService().initNotification().then((_) => NotificationService()
+        .showUploadNotification(_ref
+            .read(uploadStateProvider)
+            .where((element) => element.isUploading && !element.isError)
+            .length));
   }
 }

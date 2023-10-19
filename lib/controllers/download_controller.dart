@@ -47,6 +47,8 @@ class DownloadController {
 
       final sink = file.openWrite();
 
+      updateDownloadNotification();
+
       response.stream.listen(
         (data) {
           // Handle data chunks and update downloadState.progress
@@ -59,17 +61,23 @@ class DownloadController {
 
           // Write the data to the file
           sink.add(data);
+
+          updateDownloadNotification();
         },
         onError: (error) {
+          sink.close();
+
           // Handle download error
           downloadState.setError(error.toString());
 
           // Update the download state with the error
           downloadNotifier.updateDownloadState(index, downloadState);
+
+          updateDownloadNotification();
         },
-        onDone: () async {
+        onDone: () {
           // When download is complete, close the file sink
-          await sink.close();
+          sink.close();
 
           // Update the download state to reflect completion
           downloadState.completed();
@@ -78,16 +86,7 @@ class DownloadController {
         },
       );
 
-      final downloadStates = _ref.watch(downloadStateProvider);
-
-      final activeDownloads =
-          downloadStates.where((state) => state.isDownloading).toList();
-
-      if (activeDownloads.isNotEmpty) {
-        NotificationService().initNotification().then((_) =>
-            NotificationService()
-                .showDownloadNotification(activeDownloads.length));
-      }
+      updateDownloadNotification();
     } catch (error) {
       logger.e('Download error: $error');
 
@@ -96,6 +95,16 @@ class DownloadController {
 
       // Update the download state with the error
       downloadNotifier.updateDownloadState(index, downloadState);
+
+      updateDownloadNotification();
     }
+  }
+
+  void updateDownloadNotification() {
+    NotificationService().initNotification().then((_) => NotificationService()
+        .showUploadNotification(_ref
+            .read(downloadStateProvider)
+            .where((element) => element.isDownloading && !element.isError)
+            .length));
   }
 }

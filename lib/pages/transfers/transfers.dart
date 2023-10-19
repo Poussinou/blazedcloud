@@ -15,29 +15,17 @@ class TransfersPage extends ConsumerWidget {
     final uploadStates = ref.watch(uploadStateProvider);
     final transfers = [...downloadStates, ...uploadStates];
 
-    if (transfers.isEmpty) {
-      return const Wrap(
-        children: [
-          Center(
-            child: Column(
-              children: [UsageCard(), Text('No active transfers')],
-            ),
-          ),
-        ],
-      );
-    }
-
     return ListView.builder(
-      itemCount: transfers.length,
+      itemCount: transfers.length + 1,
       shrinkWrap: true,
       physics: const AlwaysScrollableScrollPhysics(),
       itemBuilder: (context, index) {
-        final transfer = transfers[index];
-
         // display usage card at the top of the list
         if (index == 0) {
           return const UsageCard();
         }
+
+        final transfer = transfers[index - 1];
 
         if (transfer is DownloadState) {
           return Card(

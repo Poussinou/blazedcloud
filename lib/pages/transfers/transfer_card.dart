@@ -38,7 +38,7 @@ class TransferCard extends StatelessWidget {
             ),
             const SizedBox(height: 8.0),
             LinearProgressIndicator(
-              value: percentage / 100.0,
+              value: percentage > 1 ? percentage / 100.0 : null,
               backgroundColor: Colors.grey[300],
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
             ),

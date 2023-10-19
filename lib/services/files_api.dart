@@ -8,18 +8,37 @@ import 'package:http/http.dart' as http;
 
 final httpClient = http.Client();
 
-Future<bool> deleteFile(String uid, String filename, String token) async {
+Future<bool> deleteFile(String uid, String fileKey, String token) async {
   var headers = {'Authorization': 'Bearer $token'};
   var request = http.MultipartRequest(
-      'DELETE', Uri.parse('$backendUrl/data/delete/$uid'));
-  request.fields.addAll({'filename': filename});
+      'DELETE', Uri.parse('$backendUrl/data/delete/$uid/file'));
+  request.fields.addAll({'fileKey': fileKey});
 
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await httpClient.send(request);
 
   if (response.statusCode == 200) {
-    logger.d("Deleted file $filename");
+    logger.d("Deleted file $fileKey");
+    return true;
+  } else {
+    logger.e(response.reasonPhrase);
+    return false;
+  }
+}
+
+Future<bool> deleteFolder(String uid, String folderKey, String token) async {
+  var headers = {'Authorization': 'Bearer $token'};
+  var request = http.MultipartRequest(
+      'DELETE', Uri.parse('$backendUrl/data/delete/$uid/folder'));
+  request.fields.addAll({'folderKey': folderKey});
+
+  request.headers.addAll(headers);
+
+  http.StreamedResponse response = await httpClient.send(request);
+
+  if (response.statusCode == 200) {
+    logger.d("Deleted folder $folderKey");
     return true;
   } else {
     logger.e(response.reasonPhrase);
@@ -115,12 +134,12 @@ Future<String> getUploadUrl(String uid, String filename, String token) async {
 
 /// use this to upload files directly. it will get the upload url and upload the file.
 /// exclude the uid from the filename, it is added automatically
-Future<http.StreamedResponse> uploadFile(
-    String uid, String fileKey, http.ByteStream bytes, String token) async {
+Future<http.StreamedResponse> uploadFile(String uid, String fileKey,
+    http.ByteStream bytes, String token, int length) async {
   logger.i("Uploading file $fileKey");
 
   return await getUploadUrl(uid, fileKey, token)
-      .then((value) => uploadToUrl(value, fileKey, bytes));
+      .then((value) => uploadToUrl(value, fileKey, bytes, length));
 }
 
 /// don't call directly. use uploadFile
@@ -128,6 +147,7 @@ Future<http.StreamedResponse> uploadToUrl(
   String url,
   String filename,
   http.ByteStream bytes,
+  int length,
 ) async {
   logger.i("Uploading file $filename to $url");
   try {

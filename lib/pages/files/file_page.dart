@@ -132,7 +132,7 @@ class FilesPage extends ConsumerWidget {
                       onPressed: () {
                         // create new folder key by combining current directory and new folder name
                         final String newFolderKey =
-                            "${ref.read(currentDirectoryProvider.notifier).state}${ref.read(newFolderNameProvider.notifier).state}/";
+                            "${ref.read(currentDirectoryProvider.notifier).state}${ref.read(newFolderNameProvider.notifier).state}";
                         logger.i(
                             'Creating folder ${ref.read(newFolderNameProvider.notifier).state}');
                         createFolder(newFolderKey).then((value) {

@@ -4,6 +4,7 @@ class UploadState {
   String? errorMessage;
   double progress;
   String uploadKey;
+  double sent = 0.0;
 
   UploadState({
     required this.isUploading,
@@ -29,6 +30,10 @@ class UploadState {
         isError: false,
         uploadKey: name,
       );
+
+  void addTotalSent(int sent) {
+    this.sent += sent;
+  }
 
   void completed() => isUploading = false;
 

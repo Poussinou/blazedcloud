@@ -79,7 +79,6 @@ class NotificationService {
         'upload_channel', 'Uploads',
         channelDescription: 'Notification channel for active uploads',
         importance: Importance.low,
-        priority: Priority.low,
         showProgress: true,
         indeterminate: true,
         ongoing: true);

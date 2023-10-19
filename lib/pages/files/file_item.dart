@@ -10,8 +10,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final isFileOffline =
-    FutureProvider.family<bool, String>((ref, filename) async {
-  return await isFileSavedOffline(filename);
+    FutureProvider.autoDispose.family<bool, String>((ref, filename) async {
+  return isFileSavedOffline(filename);
 });
 
 void deleteItem(String fileKey, BuildContext context, WidgetRef ref) {
@@ -32,8 +32,8 @@ void deleteItem(String fileKey, BuildContext context, WidgetRef ref) {
             // Handle delete action here
             logger.i('Deleting $fileKey');
             Navigator.of(context).pop();
-            deleteFile(pb.authStore.model.id, fileKey, pb.authStore.token);
-            ref.invalidate(fileListProvider(pb.authStore.model.id));
+            deleteFile(pb.authStore.model.id, fileKey, pb.authStore.token).then(
+                (_) => ref.invalidate(fileListProvider(pb.authStore.model.id)));
           },
           child: const Text('Delete'),
         ),
@@ -49,7 +49,7 @@ void downloadItem(String fileKey, DownloadController downloadController) {
 
 void openItem(String fileKey, WidgetRef ref) {
   isFileSavedOffline(fileKey).then((isOffline) {
-    if (isOffline ||
+    if (isOffline &&
         !isFileBeingDownloaded(fileKey, ref.read(downloadStateProvider))) {
       getOfflineFile(fileKey).then((file) {
         try {
@@ -94,10 +94,10 @@ class FileItem extends ConsumerWidget {
               return Text(getFileName(fileKey));
             }
           },
-          loading: () => const SizedBox.shrink(),
+          loading: () => Text(getFileName(fileKey)),
           error: (err, stack) {
             logger.e('Error checking if $fileKey is available offline: $err');
-            return const SizedBox.shrink();
+            return Text('${getFileName(fileKey)} (!)');
           },
         ),
         trailing: PopupMenuButton<String>(
