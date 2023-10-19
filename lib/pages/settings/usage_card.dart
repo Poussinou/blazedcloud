@@ -18,7 +18,7 @@ final combinedDataProvider = FutureProvider.autoDispose
 });
 
 class UsageCard extends ConsumerWidget {
-  const UsageCard({Key? key}) : super(key: key);
+  const UsageCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

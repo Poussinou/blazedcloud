@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
@@ -35,7 +34,6 @@ class UploadController {
       String uid, PlatformFile platformFile, String directory) async {
     final uploadState = UploadState.inProgress(platformFile.path!);
     final uploadNotifier = _ref.read(uploadStateProvider.notifier);
-    final file = File(platformFile.path!);
     final int index = uploadNotifier.addUpload(uploadState);
 
     final token = pb.authStore.token;

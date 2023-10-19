@@ -45,7 +45,6 @@ class FileSearchDelegate extends SearchDelegate {
       children: [
         ...fuzzySearch(query, getKeysFromList(list, false))
             .map((e) => SearchItem(fileKey: getStartingDirectory() + e))
-            .toList()
       ],
     );
   }
