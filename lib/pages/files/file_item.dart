@@ -59,6 +59,14 @@ void openItem(String fileKey, WidgetRef ref) {
           logger.e('Error opening file: $e');
         }
       });
+    } else {
+      logger.i('File $fileKey is not available offline');
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        SnackBar(
+          content:
+              Text('File ${getFileName(fileKey)} is not available offline'),
+        ),
+      );
     }
   });
 }

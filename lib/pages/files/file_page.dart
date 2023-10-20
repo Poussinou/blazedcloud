@@ -55,39 +55,49 @@ class FilesPage extends ConsumerWidget {
         data: (data) {
           final folderList = getFolderList(data);
           return Stack(children: [
-            ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: folderList.length + (data.contents?.length ?? 0),
-              itemBuilder: (context, index) {
-                if (index < folderList.length) {
-                  // Render folder items
-                  String folderKey = folderList[index];
+            RefreshIndicator(
+              onRefresh: () async {
+                // Invalidate by refreshing the FutureProvider
+                ref.invalidate(fileListProvider(""));
 
-                  if ("$folderKey/" != currentDirectory &&
-                      isKeyInDirectory(folderKey, true, currentDirectory)) {
-                    return FolderItem(
-                      folderKey: folderKey,
-                    );
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                } else {
-                  // Render file items
-                  int fileIndex = index - folderList.length;
-                  String fileKey = data.contents?[fileIndex].key ?? "";
-                  if (fileKey.contains(".blazed-placeholder")) {
-                    return const SizedBox.shrink();
-                  }
-                  if (isKeyInDirectory(fileKey, false, currentDirectory)) {
-                    return FileItem(
-                      fileKey: fileKey,
-                    );
-                  } else {
-                    return const SizedBox.shrink(); // Skip file items as needed
-                  }
-                }
+                // Wait for the new data to load
+                await ref.read(fileListProvider("").future);
               },
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: folderList.length + (data.contents?.length ?? 0),
+                itemBuilder: (context, index) {
+                  if (index < folderList.length) {
+                    // Render folder items
+                    String folderKey = folderList[index];
+
+                    if ("$folderKey/" != currentDirectory &&
+                        isKeyInDirectory(folderKey, true, currentDirectory)) {
+                      return FolderItem(
+                        folderKey: folderKey,
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  } else {
+                    // Render file items
+                    int fileIndex = index - folderList.length;
+                    String fileKey = data.contents?[fileIndex].key ?? "";
+                    if (fileKey.contains(".blazed-placeholder")) {
+                      return const SizedBox.shrink();
+                    }
+                    if (isKeyInDirectory(fileKey, false, currentDirectory)) {
+                      return FileItem(
+                        fileKey: fileKey,
+                      );
+                    } else {
+                      return const SizedBox
+                          .shrink(); // Skip file items as needed
+                    }
+                  }
+                },
+              ),
             ),
           ]);
         },

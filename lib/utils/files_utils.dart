@@ -320,7 +320,9 @@ String getFileName(String filename) {
 FileType getFileType(String fileName) {
   if (fileName.endsWith('.jpg') ||
       fileName.endsWith('.jpeg') ||
-      fileName.endsWith('.png')) {
+      fileName.endsWith('.png') ||
+      fileName.endsWith('.hevc') ||
+      fileName.endsWith('.gif')) {
     return FileType.image;
   } else if (fileName.endsWith('.mp4') ||
       fileName.endsWith('.avi') ||
@@ -328,10 +330,38 @@ FileType getFileType(String fileName) {
     return FileType.video;
   } else if (fileName.endsWith('.mp3') ||
       fileName.endsWith('.wav') ||
+      fileName.endsWith('.flac') ||
+      fileName.endsWith('.m4a') ||
       fileName.endsWith('.aac')) {
     return FileType.audio;
   } else if (fileName.endsWith('.doc') ||
       fileName.endsWith('.docx') ||
+      fileName.endsWith('.xls') ||
+      fileName.endsWith('.xlsx') ||
+      fileName.endsWith('.ppt') ||
+      fileName.endsWith('.pptx') ||
+      fileName.endsWith('.txt') ||
+      fileName.endsWith('.rtf') ||
+      fileName.endsWith('.csv') ||
+      fileName.endsWith('.xml') ||
+      fileName.endsWith('.json') ||
+      fileName.endsWith('.html') ||
+      fileName.endsWith('.htm') ||
+      fileName.endsWith('.log') ||
+      fileName.endsWith('.md') ||
+      fileName.endsWith('.odt') ||
+      fileName.endsWith('.ods') ||
+      fileName.endsWith('.odp') ||
+      fileName.endsWith('.odg') ||
+      fileName.endsWith('.odf') ||
+      fileName.endsWith('.epub') ||
+      fileName.endsWith('.mobi') ||
+      fileName.endsWith('.azw') ||
+      fileName.endsWith('.azw3') ||
+      fileName.endsWith('.djvu') ||
+      fileName.endsWith('.fb2') ||
+      fileName.endsWith('.xps') ||
+      fileName.endsWith('.ps') ||
       fileName.endsWith('.pdf')) {
     return FileType.doc;
   } else if (fileName.endsWith('/')) {
