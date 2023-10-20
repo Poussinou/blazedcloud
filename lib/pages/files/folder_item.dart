@@ -1,9 +1,13 @@
 import 'package:blazedcloud/constants.dart';
+import 'package:blazedcloud/controllers/download_controller.dart';
 import 'package:blazedcloud/log.dart';
+import 'package:blazedcloud/models/files_api/list_files.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
+import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void delete(String folderKey, BuildContext context, WidgetRef ref) {
@@ -11,7 +15,8 @@ void delete(String folderKey, BuildContext context, WidgetRef ref) {
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Delete folder'),
-      content: const Text('Are you sure you want to delete this Folder?'),
+      content: Text(
+          "Are you sure you want to delete this Folder? \n\n\u2022 ${getFolderName(folderKey)}"),
       actions: [
         TextButton(
           onPressed: () {
@@ -35,6 +40,27 @@ void delete(String folderKey, BuildContext context, WidgetRef ref) {
   );
 }
 
+void downloadFolder(String folderKey, ListBucketResult list,
+    DownloadController downloadController, BuildContext context) {
+  logger.i('Downloading $folderKey');
+
+  getKeysInFolder(list, folderKey, true).forEach((fileKey) {
+    logger.i('Downloading $fileKey from $folderKey');
+    downloadController.startDownload(pb.authStore.model.id, fileKey);
+  });
+  HapticFeedback.vibrate();
+
+  // snackbar
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Downloading all files from ${getFolderName(folderKey)}',
+      ),
+      duration: const Duration(seconds: 4),
+    ),
+  );
+}
+
 class FolderItem extends ConsumerWidget {
   final String folderKey;
 
@@ -45,6 +71,8 @@ class FolderItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final downloadController = ref.watch(downloadControllerProvider);
+
     return InkWell(
       child: Card(
         child: ListTile(
@@ -63,7 +91,9 @@ class FolderItem extends ConsumerWidget {
             ],
             onSelected: (value) {
               if (value == 'save') {
-                logger.e("Not implemented yet");
+                ref.read(fileListProvider("")).whenData((list) =>
+                    downloadFolder(
+                        folderKey, list, downloadController, context));
               } else if (value == 'delete') {
                 delete(folderKey, context, ref);
               }

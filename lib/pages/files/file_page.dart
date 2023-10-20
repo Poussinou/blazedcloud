@@ -4,6 +4,7 @@ import 'package:blazedcloud/pages/files/file_item.dart';
 import 'package:blazedcloud/pages/files/folder_item.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
+import 'package:blazedcloud/services/files_api.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -145,9 +146,23 @@ class FilesPage extends ConsumerWidget {
                             "${ref.read(currentDirectoryProvider.notifier).state}${ref.read(newFolderNameProvider.notifier).state}";
                         logger.i(
                             'Creating folder ${ref.read(newFolderNameProvider.notifier).state}');
-                        createFolder(newFolderKey).then((value) {
+                        createFolder(newFolderKey).then((success) {
                           ref.invalidate(fileListProvider(""));
-                          logger.i("Created folder");
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Created folder ${ref.read(newFolderNameProvider.notifier).state}'),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Error creating folder ${ref.read(newFolderNameProvider.notifier).state}'),
+                              ),
+                            );
+                          }
                         });
                         Navigator.of(context).pop();
                       },

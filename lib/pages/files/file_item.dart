@@ -54,9 +54,19 @@ void openItem(String fileKey, WidgetRef ref) {
       getOfflineFile(fileKey).then((file) {
         try {
           logger.i('Opening file: ${file.path}');
+          ScaffoldMessenger.of(ref.context).showSnackBar(
+            SnackBar(
+              content: Text('Opening file: ${getFileName(fileKey)}'),
+            ),
+          );
           openFile(file);
         } catch (e) {
           logger.e('Error opening file: $e');
+          ScaffoldMessenger.of(ref.context).showSnackBar(
+            SnackBar(
+              content: Text('Error opening file: $e'),
+            ),
+          );
         }
       });
     } else {

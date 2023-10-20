@@ -7,7 +7,6 @@ import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/files_api/list_files.dart';
 import 'package:blazedcloud/models/transfers/download_state.dart';
-import 'package:blazedcloud/services/files_api.dart';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:file_picker/file_picker.dart' as fp;
@@ -45,16 +44,6 @@ num computeTotalSizeGb(ListBucketResult list) {
   logger.i('Total size: $totalSize GB');
 
   return totalSize;
-}
-
-/// Creates a folder with a placeholder file so that it is visible in the file list.
-Future<bool> createFolder(String folderKey) async {
-  // upload a file with the name folderKey + "/.blazed-placeholder"
-  final filename = '$folderKey/.blazed-placeholder';
-
-  await uploadFile(pb.authStore.model.id, filename,
-      http.ByteStream.fromBytes(Uint8List(0)), pb.authStore.token, 0);
-  return true;
 }
 
 Future<File> decryptFile(File encryptedFile) async {
@@ -285,7 +274,6 @@ Future<String> geExportDirectory() async {
     final directory = Directory(downloadDirectory);
     if (await directory.exists()) {
       // Hive has a download directory saved, so return
-      logger.i('Download directory already saved: $downloadDirectory');
       return downloadDirectory;
     }
   }
@@ -379,8 +367,6 @@ List<String> getFolderList(ListBucketResult list) {
   Set<String> folderKeys = {};
   List<String> keys = getKeysFromList(list, true);
 
-  logger.i('Keys: $keys');
-
   for (var key in keys) {
     // remove everything after the last / including the /
     final folderKey = key.substring(0, key.lastIndexOf('/') + 1);
@@ -421,7 +407,8 @@ List<String> getKeysFromList(ListBucketResult list, bool keepStartingDir) {
   return keys;
 }
 
-List<String> getKeysInFolder(ListBucketResult list, String folderKey) {
+List<String> getKeysInFolder(
+    ListBucketResult list, String folderKey, bool keepFullKey) {
   if (list.contents == null) {
     return [];
   }
@@ -430,9 +417,12 @@ List<String> getKeysInFolder(ListBucketResult list, String folderKey) {
   for (var item in list.contents!) {
     final key = item.key;
 
-    // remove the starting directory from the key
     if (key!.startsWith(folderKey)) {
-      keys.add(key.substring(folderKey.length));
+      if (keepFullKey) {
+        keys.add(key);
+      } else {
+        keys.add(key.substring(folderKey.length));
+      }
     }
   }
   return keys;
@@ -476,7 +466,12 @@ Future<List<File?>> getUploadSelection() async {
 }
 
 bool isFileBeingDownloaded(String file, List<DownloadState> downloads) {
-  return downloads.any((download) => download.downloadKey == file);
+  for (var download in downloads) {
+    if (download.downloadKey == file && download.isDownloading) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Future<bool> isFileSavedOffline(String filename) async {
@@ -509,14 +504,14 @@ bool isKeyInDirectory(String key, bool folder, String workingDir) {
       !key.substring(workingDir.length).contains('/');
 }
 
-bool openFile(File file) {
-  if (!file.existsSync()) {
-    logger.e('File does not exist: ${file.path}');
-    return false;
-  }
-
-  OpenFilex.open(file.path);
-  return true;
+void openFile(File file) {
+  file.exists().then((exists) {
+    if (exists) {
+      OpenFilex.open(file.path);
+    } else {
+      logger.e('File does not exist: ${file.path}');
+    }
+  });
 }
 
 enum FileType { image, video, audio, doc, other, folder }

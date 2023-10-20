@@ -15,12 +15,34 @@ class DownloadController {
 
   DownloadController(this._ref);
 
-  Future<void> startDownload(String uid, String fileKey) async {
+  /// returns true if the download was started, false if the file already exists or is already being downloaded
+  Future<bool> startDownload(String uid, String fileKey) async {
+    getOfflineFile(fileKey).then((value) {
+      if (value.existsSync()) {
+        logger.i('File already exists: ${value.path}');
+        return false;
+      }
+
+      if (isFileBeingDownloaded(fileKey, _ref.read(downloadStateProvider))) {
+        logger.i('File is already being downloaded: $fileKey');
+        return false;
+      }
+    });
+
     final downloadState = DownloadState.inProgress(fileKey);
     final downloadNotifier = _ref.read(downloadStateProvider.notifier);
     final int index = downloadNotifier.addDownload(downloadState);
 
     final token = pb.authStore.token;
+
+    // pause thread if more than 3 downloads are running
+    while (_ref
+            .read(downloadStateProvider)
+            .where((element) => element.isDownloading)
+            .length >
+        3) {
+      await Future.delayed(const Duration(seconds: 1));
+    }
 
     try {
       final response = await getFile(uid, fileKey, token);
@@ -41,13 +63,9 @@ class DownloadController {
       final file = File(filePath);
 
       if (!await file.exists()) {
-        // Ensure the file exists before opening it
         await file.create(recursive: true);
       }
-
       final sink = file.openWrite();
-
-      updateDownloadNotification();
 
       response.stream.listen(
         (data) {
@@ -61,11 +79,9 @@ class DownloadController {
 
           // Write the data to the file
           sink.add(data);
-
-          updateDownloadNotification();
         },
         onError: (error) {
-          sink.close();
+          sink.flush().then((_) => sink.close());
 
           // Handle download error
           downloadState.setError(error.toString());
@@ -76,13 +92,14 @@ class DownloadController {
           updateDownloadNotification();
         },
         onDone: () {
-          // When download is complete, close the file sink
-          sink.close();
+          sink.flush().then((_) => sink.close());
 
           // Update the download state to reflect completion
           downloadState.completed();
 
           downloadNotifier.updateDownloadState(index, downloadState);
+
+          updateDownloadNotification();
         },
       );
 
@@ -98,11 +115,13 @@ class DownloadController {
 
       updateDownloadNotification();
     }
+
+    return true;
   }
 
   void updateDownloadNotification() {
     NotificationService().initNotification().then((_) => NotificationService()
-        .showUploadNotification(_ref
+        .showDownloadNotification(_ref
             .read(downloadStateProvider)
             .where((element) => element.isDownloading && !element.isError)
             .length));

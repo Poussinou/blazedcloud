@@ -39,55 +39,51 @@ class UploadController {
     final token = pb.authStore.token;
     final fileKey = '$directory${platformFile.name}';
 
+    // create request
+    final uploadUrl = await getUploadUrl(uid, fileKey, token);
+    logger.i('Upload url: $uploadUrl');
+    final request = http.StreamedRequest("PUT", Uri.parse(uploadUrl));
+
     try {
       final totalBytes = platformFile.size;
-
-      final uploadUrl = await getUploadUrl(uid, fileKey, token);
-      logger.i('Upload url: $uploadUrl');
-
-      // create request
-      final request = http.StreamedRequest("PUT", Uri.parse(uploadUrl));
       final bytes = platformFile.readStream!.asBroadcastStream();
 
-      updateUploadNotification();
-
       // Add a progress callback to the response stream
-      bytes.listen(
-        (data) {
-          // Calculate progress and update the upload state
-          uploadState.addTotalSent(data.length);
-          final sent = uploadState.sent;
-          final progress = sent / totalBytes;
-          uploadState.updateProgress(progress);
+      bytes.listen((data) {
+        // Calculate progress and update the upload state
+        uploadState.addTotalSent(data.length);
+        final sent = uploadState.sent;
+        final progress = sent / totalBytes;
+        uploadState.updateProgress(progress);
 
-          // Update the upload state with the updated progress
-          uploadNotifier.updateUploadState(index, uploadState);
-        },
-        onError: (error) {
-          logger.e('Upload error: $error');
+        // Update the upload state with the updated progress
+        uploadNotifier.updateUploadState(index, uploadState);
+      }, onError: (error) {
+        logger.e('Upload error: $error');
+        try {
           request.sink.close();
+        } catch (e) {
+          logger.e('Error closing request sink: $e');
+        }
 
-          // Handle any errors during the upload
-          uploadState.setError(error.toString());
-          uploadState.completed();
-          uploadNotifier.updateUploadState(index, uploadState);
+        // Handle any errors during the upload
+        uploadState.setError(error.toString());
+        uploadState.completed();
+        uploadNotifier.updateUploadState(index, uploadState);
 
-          updateUploadNotification();
-        },
-        onDone: () {
-          logger.i('Upload done');
-          request.sink.close();
+        updateUploadNotification();
+      }, onDone: () {
+        logger.i('Upload done');
 
-          // Handle upload completion
-          uploadState.completed();
-          uploadNotifier.updateUploadState(index, uploadState);
+        // Handle upload completion
+        uploadState.completed();
+        uploadNotifier.updateUploadState(index, uploadState);
 
-          // Update the file list
-          _ref.invalidate(fileListProvider);
+        // Update the file list
+        _ref.invalidate(fileListProvider);
 
-          updateUploadNotification();
-        },
-      );
+        updateUploadNotification();
+      }, cancelOnError: true);
 
       request.contentLength = totalBytes;
       request.sink.addStream(bytes);
@@ -102,6 +98,8 @@ class UploadController {
       uploadNotifier.updateUploadState(index, uploadState);
 
       updateUploadNotification();
+
+      request.sink.close();
     }
   }
 

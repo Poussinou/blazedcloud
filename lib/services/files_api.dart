@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
@@ -7,6 +8,20 @@ import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:http/http.dart' as http;
 
 final httpClient = http.Client();
+
+/// Creates a folder with a placeholder file so that it is visible in the file list.
+Future<bool> createFolder(String folderKey) async {
+  // upload a file with the name folderKey + "/.blazed-placeholder"
+  final filename = '$folderKey/.blazed-placeholder';
+
+  final uploadUrl =
+      await getUploadUrl(pb.authStore.model.id, filename, pb.authStore.token);
+
+  final body = Uint8List.fromList([0]);
+
+  final response = await httpClient.put(Uri.parse(uploadUrl), body: body);
+  return response.statusCode == 200;
+}
 
 Future<bool> deleteFile(String uid, String fileKey, String token) async {
   var headers = {'Authorization': 'Bearer $token'};
@@ -90,7 +105,6 @@ Future<String> getFileLink(String uid, String filename, String token) async {
 
 Future<ListBucketResult> getFilelist(
     String uid, String from, String token) async {
-  logger.i("Getting file list for $uid");
   var headers = {'Authorization': 'Bearer $token'};
   var request = http.Request('POST', Uri.parse('$backendUrl/data/list/$uid'));
 
@@ -101,7 +115,6 @@ Future<ListBucketResult> getFilelist(
 
   if (response.statusCode == 200) {
     final responseBody = await response.stream.transform(utf8.decoder).join();
-    logger.d("Got file list - $responseBody");
     return ListBucketResult.fromJson(jsonDecode(responseBody));
   } else {
     logger.e(response.reasonPhrase);
