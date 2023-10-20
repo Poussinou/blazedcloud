@@ -17,6 +17,15 @@ class DownloadController {
 
   /// returns true if the download was started, false if the file already exists or is already being downloaded
   Future<bool> startDownload(String uid, String fileKey) async {
+    // Get the app's internal storage directory
+    final appDocDir = await geExportDirectory(true);
+    final filePath = '$appDocDir/$fileKey'; // Define the file path
+
+    if (appDocDir.isEmpty) {
+      logger.e('Could not get appDocDir');
+      return false;
+    }
+
     getOfflineFile(fileKey).then((value) {
       if (value.existsSync()) {
         logger.i('File already exists: ${value.path}');
@@ -46,10 +55,6 @@ class DownloadController {
 
     try {
       final response = await getFile(uid, fileKey, token);
-
-      // Get the app's internal storage directory
-      final appDocDir = await geExportDirectory();
-      final filePath = '$appDocDir/$fileKey'; // Define the file path
 
       // Ensure the directory exists
       final directory = Directory(appDocDir);

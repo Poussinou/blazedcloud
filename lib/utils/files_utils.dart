@@ -10,6 +10,7 @@ import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:file_picker/file_picker.dart' as fp;
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
@@ -264,7 +265,7 @@ List<String> fuzzySearch(String query, List<String> list) {
 }
 
 /// Get the download directory from Hive or prompt the user to select one.
-Future<String> geExportDirectory() async {
+Future<String> geExportDirectory(bool promptForDirectory) async {
   // check if Hive has a download directory saved
   final box = await Hive.openBox<String>('files');
   final downloadDirectory = box.get('downloadDirectory');
@@ -276,7 +277,15 @@ Future<String> geExportDirectory() async {
       // Hive has a download directory saved, so return
       return downloadDirectory;
     }
+  } else if (!promptForDirectory) {
+    return '';
   }
+
+  // toast
+  Fluttertoast.showToast(
+      msg: "Select a folder to store downloaded files",
+      toastLength: Toast.LENGTH_LONG,
+      fontSize: 16.0);
 
   final result = await fp.FilePicker.platform.getDirectoryPath();
 
@@ -430,7 +439,7 @@ List<String> getKeysInFolder(
 
 Future<File> getOfflineFile(String filename) async {
   // Get the directory for the app's internal storage
-  final directory = await geExportDirectory();
+  final directory = await geExportDirectory(false);
 
   // Construct the file path using the filename
   final filePath = File('$directory/$filename');
@@ -477,7 +486,7 @@ bool isFileBeingDownloaded(String file, List<DownloadState> downloads) {
 Future<bool> isFileSavedOffline(String filename) async {
   // Get the directory for the app's internal storage
   //final directory = await getApplicationDocumentsDirectory();
-  final directory = await geExportDirectory();
+  final directory = await geExportDirectory(false);
 
   // Construct the file path using the filename
   final filePath = File('$directory/$filename');
