@@ -96,54 +96,57 @@ class FileItem extends ConsumerWidget {
     final downloadController = ref.watch(downloadControllerProvider);
 
     return Card(
-      child: ListTile(
-        leading: Icon(
-          type == FileType.image
-              ? Icons.image
-              : type == FileType.video
-                  ? Icons.video_library
-                  : Icons.insert_drive_file,
+      child: InkWell(
+        child: ListTile(
+          leading: Icon(
+            type == FileType.image
+                ? Icons.image
+                : type == FileType.video
+                    ? Icons.video_library
+                    : Icons.insert_drive_file,
+          ),
+          title: isAvailableOffline.when(
+            data: (offline) {
+              if (offline) {
+                return Text('${getFileName(fileKey)} ✓');
+              } else {
+                return Text(getFileName(fileKey));
+              }
+            },
+            loading: () => Text(getFileName(fileKey)),
+            error: (err, stack) {
+              logger.e('Error checking if $fileKey is available offline: $err');
+              return Text('${getFileName(fileKey)} (!)');
+            },
+          ),
+          trailing: PopupMenuButton<String>(
+            itemBuilder: (context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'open',
+                child: Text('Open'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'save',
+                child: Text('Save'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Text('Delete'),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'open') {
+                openItem(fileKey, ref);
+              } else if (value == 'save') {
+                downloadItem(fileKey, downloadController);
+              } else if (value == 'delete') {
+                // ask for confirmation before deleting
+                deleteItem(fileKey, context, ref);
+              }
+            },
+          ),
         ),
-        title: isAvailableOffline.when(
-          data: (offline) {
-            if (offline) {
-              return Text('${getFileName(fileKey)} ✓');
-            } else {
-              return Text(getFileName(fileKey));
-            }
-          },
-          loading: () => Text(getFileName(fileKey)),
-          error: (err, stack) {
-            logger.e('Error checking if $fileKey is available offline: $err');
-            return Text('${getFileName(fileKey)} (!)');
-          },
-        ),
-        trailing: PopupMenuButton<String>(
-          itemBuilder: (context) => <PopupMenuEntry<String>>[
-            const PopupMenuItem<String>(
-              value: 'open',
-              child: Text('Open'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'save',
-              child: Text('Save'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'delete',
-              child: Text('Delete'),
-            ),
-          ],
-          onSelected: (value) {
-            if (value == 'open') {
-              openItem(fileKey, ref);
-            } else if (value == 'save') {
-              downloadItem(fileKey, downloadController);
-            } else if (value == 'delete') {
-              // ask for confirmation before deleting
-              deleteItem(fileKey, context, ref);
-            }
-          },
-        ),
+        onTap: () => openItem(fileKey, ref),
       ),
     );
   }
