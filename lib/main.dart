@@ -119,7 +119,7 @@ class LandingPage extends ConsumerWidget {
         return ref.watch(savedAuthProvider).when(
           data: (data) {
             if (data) {
-              logger.i("Token is valid. User: ${pb.authStore.model.id}");
+              logger.d("Token is valid. User: ${pb.authStore.model.id}");
               return const Dashboard();
             } else {
               return const LandingContent();
@@ -151,11 +151,18 @@ class LandingPage extends ConsumerWidget {
         );
       },
       error: (err, stack) {
-        logger.i("Server Health check failed: $err");
-        return const Scaffold(
+        logger.e("Server Health check failed: $err");
+        return Scaffold(
           body: Center(
-            child: Text(
-                "Authentication Server is currently undergoing routine maintenance"),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(err.toString()),
+                ),
+              ),
+            ),
           ),
         );
       },
