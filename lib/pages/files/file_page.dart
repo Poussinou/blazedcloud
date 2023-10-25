@@ -55,6 +55,12 @@ class FilesPage extends ConsumerWidget {
       body: fileList.when(
         data: (data) {
           final folderList = getFolderList(data);
+          if (data.contents?.isEmpty ?? true) {
+            return const Center(
+              child: Text("No files or folders"),
+            );
+          }
+
           return Stack(children: [
             RefreshIndicator(
               onRefresh: () async {

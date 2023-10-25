@@ -79,17 +79,17 @@ class UploadController {
         uploadState.completed();
         uploadNotifier.updateUploadState(index, uploadState);
 
-        // Update the file list
-        _ref.invalidate(fileListProvider);
-
         updateUploadNotification();
+        _ref.invalidate(fileListProvider(""));
       }, cancelOnError: true);
 
       request.contentLength = totalBytes;
       request.sink.addStream(bytes);
-      final response = await httpClient.send(request);
-      logger.d(
-          'Upload response: ${response.statusCode} \n ${response.reasonPhrase}');
+      await httpClient.send(request).then((response) {
+        response.stream
+            .drain()
+            .then((_) => _ref.invalidate(fileListProvider("")));
+      });
     } catch (error) {
       logger.e('Upload error: $error');
 
