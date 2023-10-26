@@ -18,7 +18,7 @@ class DownloadController {
   /// returns true if the download was started, false if the file already exists or is already being downloaded
   Future<bool> startDownload(String uid, String fileKey) async {
     // Get the app's internal storage directory
-    final appDocDir = await geExportDirectory(true);
+    final appDocDir = await getExportDirectory(true);
     final filePath = '$appDocDir/$fileKey'; // Define the file path
 
     if (appDocDir.isEmpty) {

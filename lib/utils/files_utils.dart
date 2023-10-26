@@ -265,7 +265,7 @@ List<String> fuzzySearch(String query, List<String> list) {
 }
 
 /// Get the download directory from Hive or prompt the user to select one.
-Future<String> geExportDirectory(bool promptForDirectory) async {
+Future<String> getExportDirectory(bool promptForDirectory) async {
   // check if Hive has a download directory saved
   final box = await Hive.openBox<String>('files');
   final downloadDirectory = box.get('downloadDirectory');
@@ -275,6 +275,7 @@ Future<String> geExportDirectory(bool promptForDirectory) async {
     final directory = Directory(downloadDirectory);
     if (await directory.exists()) {
       // Hive has a download directory saved, so return
+      logger.i('Download directory: $downloadDirectory');
       return downloadDirectory;
     }
   } else if (!promptForDirectory) {
@@ -439,7 +440,7 @@ List<String> getKeysInFolder(
 
 Future<File> getOfflineFile(String filename) async {
   // Get the directory for the app's internal storage
-  final directory = await geExportDirectory(false);
+  final directory = await getExportDirectory(false);
 
   // Construct the file path using the filename
   final filePath = File('$directory/$filename');
@@ -486,7 +487,7 @@ bool isFileBeingDownloaded(String file, List<DownloadState> downloads) {
 Future<bool> isFileSavedOffline(String filename) async {
   // Get the directory for the app's internal storage
   //final directory = await getApplicationDocumentsDirectory();
-  final directory = await geExportDirectory(false);
+  final directory = await getExportDirectory(false);
 
   // Construct the file path using the filename
   final filePath = File('$directory/$filename');

@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:glassfy_flutter/glassfy_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -24,6 +24,8 @@ void main() async {
   } catch (e) {
     logger.w("Glassfy failed to initialize: $e");
   }
+
+  await Hive.initFlutter();
 
   runApp(const MyApp());
 }
@@ -170,7 +172,7 @@ class LandingPage extends ConsumerWidget {
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text(
-                      "Authentication server is currently undergoing maintenance. Please try again later."),
+                      "Server is currently undergoing maintenance. Please try again later."),
                 ),
               ),
             ),

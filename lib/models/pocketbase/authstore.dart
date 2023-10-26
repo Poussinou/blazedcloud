@@ -23,8 +23,6 @@ class CustomAuthStore extends AuthStore {
   }
 
   Future<CustomAuthStore?> loadAuth() async {
-    await Hive.initFlutter();
-
     // Load the encryption key from secure storage
     const secureStorage = FlutterSecureStorage();
     final encryptionKeyString = await secureStorage.read(key: 'key');

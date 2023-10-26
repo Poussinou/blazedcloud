@@ -89,6 +89,7 @@ class UploadController {
         response.stream
             .drain()
             .then((_) => _ref.invalidate(fileListProvider("")));
+        _ref.invalidate(fileListProvider(""));
       });
     } catch (error) {
       logger.e('Upload error: $error');
@@ -100,6 +101,8 @@ class UploadController {
       updateUploadNotification();
 
       request.sink.close();
+    } finally {
+      _ref.invalidate(fileListProvider(""));
     }
   }
 

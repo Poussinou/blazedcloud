@@ -99,8 +99,11 @@ class SettingsScreen extends ConsumerWidget {
             // delete account
             try {
               pb.collection('users').delete(pb.authStore.model.id);
-              pb.authStore.clear();
-              context.go('/landing');
+              Hive.deleteBoxFromDisk('vaultBox');
+              const FlutterSecureStorage().delete(key: 'key').then((value) {
+                pb.authStore.clear();
+                context.go('/landing');
+              });
 
               // show dialog
               showDialog(
