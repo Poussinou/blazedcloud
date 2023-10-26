@@ -48,7 +48,7 @@ class User {
 
   // get single user
   Future<User> getUser(String id) async {
-    final result = await pb.collection('users').getOne(id, expand: 'friends');
+    final result = await pb.collection('users').getOne(id);
     logger.i("Get user: ${jsonEncode(result)}");
 
     return User(

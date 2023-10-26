@@ -60,6 +60,7 @@ class LoginScreen extends ConsumerWidget {
                     context.go('/dashboard');
                   }
                 }).onError((error, stackTrace) {
+                  logger.e("Error logging in: $error");
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text("Invalid email or password")));
                   return null;

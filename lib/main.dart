@@ -7,6 +7,7 @@ import 'package:blazedcloud/pages/login/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:glassfy_flutter/glassfy_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:lottie/lottie.dart';
@@ -14,6 +15,15 @@ import 'package:pocketbase/pocketbase.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    logger.i("Initializing Glassfy");
+    await Glassfy.initialize('e7e4e5d11b2f48169f26e930a660862b',
+        watcherMode: false);
+    logger.i("Glassfy initialized");
+  } catch (e) {
+    logger.w("Glassfy failed to initialize: $e");
+  }
 
   runApp(const MyApp());
 }
@@ -119,7 +129,7 @@ class LandingPage extends ConsumerWidget {
         return ref.watch(savedAuthProvider).when(
           data: (data) {
             if (data) {
-              logger.i("Token is valid. User: ${pb.authStore.model.id}");
+              logger.d("Token is valid. User: ${pb.authStore.model.id}");
               return const Dashboard();
             } else {
               return const LandingContent();
@@ -151,11 +161,18 @@ class LandingPage extends ConsumerWidget {
         );
       },
       error: (err, stack) {
-        logger.i("Server Health check failed: $err");
-        return const Scaffold(
+        logger.e("Server Health check failed: $err");
+        return Scaffold(
           body: Center(
-            child: Text(
-                "Authentication Server is currently undergoing routine maintenance"),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(err.toString()),
+                ),
+              ),
+            ),
           ),
         );
       },
