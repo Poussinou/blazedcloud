@@ -162,14 +162,15 @@ class LandingPage extends ConsumerWidget {
       },
       error: (err, stack) {
         logger.e("Server Health check failed: $err");
-        return Scaffold(
+        return const Scaffold(
           body: Center(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
               child: Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(err.toString()),
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                      "Authentication server is currently undergoing maintenance. Please try again later."),
                 ),
               ),
             ),

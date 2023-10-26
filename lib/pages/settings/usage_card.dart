@@ -1,8 +1,10 @@
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
+import 'package:blazedcloud/models/pocketbase/user.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/pb_providers.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
+import 'package:blazedcloud/utils/user_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,7 +42,7 @@ class UsageCard extends ConsumerWidget {
             usageData.when(
               data: (data) {
                 final usageGB = computeTotalSizeGb(data['fileList']);
-                final capacityGB = data['user'].capacity_gigs;
+                final capacityGB = getTotalGigCapacity(data['user'] as User);
                 logger.i('Usage: $usageGB GB / $capacityGB GB');
 
                 // Calculate the percentage of usage

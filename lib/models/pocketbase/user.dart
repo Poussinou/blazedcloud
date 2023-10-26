@@ -16,7 +16,8 @@ class User {
   String created;
   String updated;
   List<String> sharing;
-  bool active;
+  bool terabyte_active;
+  bool prereg_bonus;
   String glassfy;
   int capacity_gigs;
   bool usingPersonalEncryption;
@@ -33,11 +34,12 @@ class User {
     this.created = "",
     this.updated = "",
     this.sharing = const [],
-    this.active = false,
+    this.terabyte_active = false,
     this.glassfy = "",
     this.capacity_gigs = 5,
     this.usingPersonalEncryption = false,
     this.personalEncryptionHashes = "",
+    this.prereg_bonus = false,
   });
 
   // delete user
@@ -62,7 +64,8 @@ class User {
       created: result.getStringValue('created'),
       updated: result.getStringValue('updated'),
       sharing: result.getListValue('sharing'),
-      active: result.getBoolValue('active'),
+      terabyte_active: result.getBoolValue('terabyte_active'),
+      prereg_bonus: result.getBoolValue('prereg_bonus'),
       glassfy: result.getStringValue('glassfy'),
       capacity_gigs: result.getIntValue('capacity_gigs'),
       usingPersonalEncryption: result.getBoolValue('usingPersonalEncryption'),
@@ -82,7 +85,8 @@ class User {
         'created': created,
         'updated': updated,
         'sharing': sharing,
-        'active': active,
+        'terabyte_active': terabyte_active,
+        'prereg_bonus': prereg_bonus,
         'glassfy': glassfy,
         'capacity_gigs': capacity_gigs,
         'usingPersonalEncryption': usingPersonalEncryption,
