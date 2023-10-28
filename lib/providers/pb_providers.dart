@@ -6,6 +6,4 @@ final accountUserProvider =
   return ref.read(userProvider).getUser(id);
 });
 
-final premiumProvider = StateProvider<bool>((ref) => false);
-
 final userProvider = Provider<User>((ref) => User());

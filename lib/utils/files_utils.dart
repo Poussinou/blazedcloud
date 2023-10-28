@@ -230,6 +230,30 @@ Future<File> encryptFile(File inputFile) async {
   return encryptedFile;
 }
 
+String filterUidFromKey(String key) {
+  // if the key starts with the uid + /, remove it
+  if (key.startsWith(pb.authStore.model.id + '/')) {
+    return key.substring(pb.authStore.model.id.length + 1);
+  } else {
+    return key;
+  }
+}
+
+String formatMinutes(int minutes) {
+  // Format the minutes into a string using format 15m or 1h45m or 24h10m
+  if (minutes < 60) {
+    return '${minutes}m';
+  } else {
+    final hours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+    if (remainingMinutes == 0) {
+      return '${hours}h';
+    } else {
+      return '${hours}h${remainingMinutes}m';
+    }
+  }
+}
+
 List<String> fuzzySearch(String query, List<String> list) {
   // Calculate a "score" for each item in the list based on how close it matches the query
   final scoredItems = list.map<Map<String, dynamic>>((item) {

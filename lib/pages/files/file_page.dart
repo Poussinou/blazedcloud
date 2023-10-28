@@ -1,11 +1,15 @@
+import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/files_api/search_delagate.dart';
+import 'package:blazedcloud/models/pocketbase/user.dart';
 import 'package:blazedcloud/pages/files/file_item.dart';
 import 'package:blazedcloud/pages/files/folder_item.dart';
+import 'package:blazedcloud/pages/settings/usage_card.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
+import 'package:blazedcloud/utils/user_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -181,13 +185,33 @@ class FilesPage extends ConsumerWidget {
             child: const Icon(Icons.create_new_folder),
           ),
           const SizedBox(width: 16),
-          FloatingActionButton(
-            onPressed: () {
-              uploadController
-                  .selectFilesToUpload(ref.read(currentDirectoryProvider));
-            },
-            child: const Icon(Icons.file_upload),
-          ),
+          ref.watch(combinedDataProvider(pb.authStore.model.id)).when(
+              data: (data) {
+                final usageGB = computeTotalSizeGb(data['fileList']);
+                final capacityGB = getTotalGigCapacity(data['user'] as User);
+
+                if (usageGB >= capacityGB) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'You have reached your storage limit. Please upgrade your storage.'),
+                    ),
+                  );
+                  return const SizedBox.shrink();
+                } else {
+                  return FloatingActionButton(
+                      onPressed: () {
+                        uploadController.selectFilesToUpload(
+                            ref.read(currentDirectoryProvider));
+                      },
+                      child: const Icon(Icons.file_upload));
+                }
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (err, stack) {
+                logger.e("Error loading file list: $err");
+                return const SizedBox.shrink();
+              })
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,

@@ -14,6 +14,8 @@ final isFileOffline =
   return isFileSavedOffline(filename);
 });
 
+final shareDurationProvider = StateProvider<int>((ref) => 60);
+
 void deleteItem(String fileKey, BuildContext context, WidgetRef ref) {
   showDialog(
     context: context,
@@ -81,6 +83,73 @@ void openItem(String fileKey, WidgetRef ref) {
   });
 }
 
+void shareItem(String fileKey, WidgetRef ref) {
+  // show dialog with slider with intervals from 15m to 144h
+  showDialog(
+    context: ref.context,
+    builder: (context) => StatefulBuilder(builder: (context, setState) {
+      return AlertDialog(
+        title: const Text('Share file'),
+        content: Wrap(
+          children: [
+            Column(
+              children: [
+                const Text(
+                    'How long should the file be available for sharing?'),
+                const SizedBox(height: 8.0),
+                Slider(
+                  value: ref.watch(shareDurationProvider).toDouble(),
+                  min: 15,
+                  max: 8640,
+                  divisions: 11,
+                  label: formatMinutes(ref.watch(shareDurationProvider)),
+                  onChanged: (value) {
+                    setState(() {
+                      ref.read(shareDurationProvider.notifier).state =
+                          value.toInt();
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Handle share action here
+              logger.i('Sharing $fileKey');
+              Navigator.of(context).pop();
+
+              getFileLink(pb.authStore.model.id, fileKey, pb.authStore.token,
+                      sharing: true,
+                      duration: formatMinutes(ref.watch(shareDurationProvider)))
+                  .then((link) {
+                Clipboard.setData(
+                  ClipboardData(text: link),
+                );
+
+                ScaffoldMessenger.of(ref.context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Link copied to clipboard'),
+                  ),
+                );
+              });
+            },
+            child: const Text('Share'),
+          ),
+        ],
+      );
+    }),
+  );
+}
+
 class FileItem extends ConsumerWidget {
   final String fileKey;
 
@@ -126,6 +195,10 @@ class FileItem extends ConsumerWidget {
                 child: Text('Open'),
               ),
               const PopupMenuItem<String>(
+                value: 'share',
+                child: Text('Share'),
+              ),
+              const PopupMenuItem<String>(
                 value: 'save',
                 child: Text('Save'),
               ),
@@ -142,6 +215,8 @@ class FileItem extends ConsumerWidget {
               } else if (value == 'delete') {
                 // ask for confirmation before deleting
                 deleteItem(fileKey, context, ref);
+              } else if (value == 'share') {
+                shareItem(fileKey, ref);
               }
             },
           ),

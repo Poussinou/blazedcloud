@@ -82,13 +82,21 @@ Future<http.StreamedResponse> getFile(
   }
 }
 
-/// don't call directly. This is used by getFile()
-Future<String> getFileLink(String uid, String filename, String token) async {
+/// don't call directly to download files. This is used by getFile(). Unless you want to share the link
+Future<String> getFileLink(String uid, String filename, String token,
+    {bool sharing = false, String duration = "15m"}) async {
   logger.i("Getting file link for $filename");
   var request =
       http.MultipartRequest('POST', Uri.parse('$backendUrl/data/down/$uid'));
+
+  if (!sharing) {
+    request.fields.addAll({'filename': filename});
+  } else {
+    request.fields.addAll(
+        {'filename': filename, 'duration': duration, 'useShlink': 'true'});
+  }
+
   var headers = {'Authorization': 'Bearer $token'};
-  request.fields.addAll({'filename': filename});
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await httpClient.send(request);
