@@ -34,23 +34,11 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //userData.when(
-              //  data: (data) => CustomSettingsGroup(items: [
-              //    CustomSettingsItem(
-              //      onTap: () {},
-              //      icons: CupertinoIcons.eyeglasses,
-              //      iconStyle: IconStyle(backgroundColor: Colors.red),
-              //      title: 'Client-side encryption key',
-              //      subtitle: 'Encrypt files locally before upload',
-              //      trailing: const SizedBox.shrink(),
-              //    )
-              //  ]),
-              //  loading: () => const SizedBox.shrink(),
-              //  error: (err, stack) {
-              //    logger.e("Error loading user data: $err");
-              //    return const SizedBox.shrink();
-              //  },
-              //),
+              CustomSettingsGroup(
+                items: [
+                  downloadLocationChangeSetting(userData, context),
+                ],
+              ),
               CustomSettingsGroup(
                 items: [
                   passwordResetSetting(userData, context),
@@ -143,6 +131,18 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  CustomSettingsItem downloadLocationChangeSetting(
+      AsyncValue<User> userData, BuildContext context) {
+    return CustomSettingsItem(
+      onTap: () {},
+      icons: CupertinoIcons.at,
+      trailing: const SizedBox.shrink(),
+      iconStyle: IconStyle(),
+      title: 'Change Download Location',
+      subtitle: "Current: ",
+    );
+  }
+
   CustomSettingsItem emailChangeSetting(
       AsyncValue<User> userData, BuildContext context) {
     return CustomSettingsItem(
@@ -167,6 +167,17 @@ class SettingsScreen extends ConsumerWidget {
       iconStyle: IconStyle(),
       title: 'Change Email',
       subtitle: "Will send a link to your email to complete the change",
+    );
+  }
+
+  CustomSettingsItem githubSetting(
+      AsyncValue<User> userData, BuildContext context) {
+    return CustomSettingsItem(
+      onTap: () {},
+      icons: CupertinoIcons.at,
+      trailing: const SizedBox.shrink(),
+      iconStyle: IconStyle(),
+      title: 'View on Github',
     );
   }
 

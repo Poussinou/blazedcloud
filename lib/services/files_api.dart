@@ -46,7 +46,7 @@ Future<bool> deleteFolder(String uid, String folderKey, String token) async {
   var headers = {'Authorization': 'Bearer $token'};
   var request = http.MultipartRequest(
       'DELETE', Uri.parse('$backendUrl/data/delete/$uid/folder'));
-  request.fields.addAll({'folderKey': folderKey});
+  request.fields.addAll({'folderKey': filterUidFromKey(folderKey)});
 
   request.headers.addAll(headers);
 

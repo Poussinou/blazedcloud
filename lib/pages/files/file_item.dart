@@ -34,8 +34,8 @@ void deleteItem(String fileKey, BuildContext context, WidgetRef ref) {
             // Handle delete action here
             logger.i('Deleting $fileKey');
             Navigator.of(context).pop();
-            deleteFile(pb.authStore.model.id, fileKey, pb.authStore.token).then(
-                (_) => ref.invalidate(fileListProvider(pb.authStore.model.id)));
+            deleteFile(pb.authStore.model.id, fileKey, pb.authStore.token)
+                .then((_) => ref.invalidate(fileListProvider("")));
           },
           child: const Text('Delete'),
         ),

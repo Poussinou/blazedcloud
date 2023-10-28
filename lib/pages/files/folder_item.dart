@@ -30,8 +30,7 @@ void delete(String folderKey, BuildContext context, WidgetRef ref) {
             logger.i('Deleting $folderKey');
             Navigator.of(context).pop();
             deleteFolder(pb.authStore.model.id, folderKey, pb.authStore.token)
-                .then((_) =>
-                    ref.invalidate(fileListProvider(pb.authStore.model.id)));
+                .then((_) => ref.invalidate(fileListProvider("")));
           },
           child: const Text('Delete'),
         ),

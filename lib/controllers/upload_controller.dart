@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/transfers/upload_state.dart';
+import 'package:blazedcloud/pages/settings/usage_card.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';
@@ -80,7 +81,6 @@ class UploadController {
         uploadNotifier.updateUploadState(index, uploadState);
 
         updateUploadNotification();
-        _ref.invalidate(fileListProvider(""));
       }, cancelOnError: true);
 
       request.contentLength = totalBytes;
@@ -89,7 +89,6 @@ class UploadController {
         response.stream
             .drain()
             .then((_) => _ref.invalidate(fileListProvider("")));
-        _ref.invalidate(fileListProvider(""));
       });
     } catch (error) {
       logger.e('Upload error: $error');
@@ -103,6 +102,7 @@ class UploadController {
       request.sink.close();
     } finally {
       _ref.invalidate(fileListProvider(""));
+      _ref.invalidate(combinedDataProvider(pb.authStore.model.id));
     }
   }
 
