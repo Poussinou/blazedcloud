@@ -4,6 +4,7 @@ import 'package:blazedcloud/models/pocketbase/authstore.dart';
 import 'package:blazedcloud/pages/dashboard.dart';
 import 'package:blazedcloud/pages/login/login.dart';
 import 'package:blazedcloud/pages/login/signup.dart';
+import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -164,20 +165,35 @@ class LandingPage extends ConsumerWidget {
       },
       error: (err, stack) {
         logger.e("Server Health check failed: $err");
-        return const Scaffold(
-          body: Center(
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Card(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                      "Server is currently undergoing maintenance. Please try again later."),
+        return FutureBuilder(
+            future: getExportDirectory(false),
+            builder: (context, snapshot) {
+              return Scaffold(
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Wrap(
+                          children: [
+                            Column(
+                              children: [
+                                const Text(
+                                    "Server is currently undergoing maintenance. Please try again later."),
+                                if (snapshot.hasData && snapshot.data != '')
+                                  Text(
+                                      "Offline files are stored at ${snapshot.data}"),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-        );
+              );
+            });
       },
     );
   }
