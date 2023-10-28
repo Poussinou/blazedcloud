@@ -2,6 +2,7 @@ import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/controllers/download_controller.dart';
 import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/files_api/list_files.dart';
+import 'package:blazedcloud/pages/settings/usage_card.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';
@@ -30,7 +31,10 @@ void delete(String folderKey, BuildContext context, WidgetRef ref) {
             logger.i('Deleting $folderKey');
             Navigator.of(context).pop();
             deleteFolder(pb.authStore.model.id, folderKey, pb.authStore.token)
-                .then((_) => ref.invalidate(fileListProvider("")));
+                .then((_) {
+              ref.invalidate(fileListProvider(""));
+              ref.invalidate(combinedDataProvider(pb.authStore.model.id));
+            });
           },
           child: const Text('Delete'),
         ),
