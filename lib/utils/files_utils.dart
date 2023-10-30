@@ -40,10 +40,7 @@ num computeTotalSizeGb(ListBucketResult list) {
   }
 
   // convert to GB from bytes
-  logger.i('Total size: $totalSize bytes');
   totalSize = totalSize / 1000000000;
-  logger.i('Total size: $totalSize GB');
-
   return totalSize;
 }
 

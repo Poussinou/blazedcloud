@@ -73,6 +73,8 @@ class UploadController {
         uploadNotifier.updateUploadState(index, uploadState);
 
         updateUploadNotification();
+
+        _ref.invalidate(fileListProvider(""));
       }, onDone: () {
         logger.i('Upload done');
 
@@ -81,15 +83,14 @@ class UploadController {
         uploadNotifier.updateUploadState(index, uploadState);
 
         updateUploadNotification();
+
+        _ref.invalidate(fileListProvider(""));
       }, cancelOnError: true);
 
       request.contentLength = totalBytes;
       request.sink.addStream(bytes);
-      await httpClient.send(request).then((response) {
-        response.stream
-            .drain()
-            .then((_) => _ref.invalidate(fileListProvider("")));
-      });
+      await httpClient.send(request).timeout(const Duration(seconds: 1));
+      _ref.invalidate(fileListProvider(""));
     } catch (error) {
       logger.e('Upload error: $error');
 

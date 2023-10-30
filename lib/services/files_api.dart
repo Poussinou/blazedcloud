@@ -113,6 +113,7 @@ Future<String> getFileLink(String uid, String filename, String token,
 
 Future<ListBucketResult> getFilelist(
     String uid, String from, String token) async {
+  logger.d("Getting file list for $uid");
   var headers = {'Authorization': 'Bearer $token'};
   var request = http.Request('POST', Uri.parse('$backendUrl/data/list/$uid'));
 

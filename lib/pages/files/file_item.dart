@@ -39,7 +39,7 @@ void deleteItem(String fileKey, BuildContext context, WidgetRef ref) {
                 .then((_) {
               ref.invalidate(fileListProvider(""));
               ref.invalidate(combinedDataProvider(pb.authStore.model.id));
-            });
+            }).timeout(const Duration(seconds: 1));
           },
           child: const Text('Delete'),
         ),
