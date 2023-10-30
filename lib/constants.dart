@@ -8,7 +8,7 @@ import 'package:pocketbase/pocketbase.dart';
 // tests
 //const String backendUrl = "http://127.0.0.1:8090";
 // dev
-const String backendUrl = "https://mavhack.hopto.org:8099";
+const String backendUrl = "https://blazed-cloud-pb.fly.dev";
 // prod
 //const String backendUrl = "https://dietly-pb.fly.dev";
 
