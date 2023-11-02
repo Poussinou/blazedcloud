@@ -45,7 +45,6 @@ dependencies:
   babstrap_settings_screen: ^0.1.6
   shared_preferences: ^2.2.1
   flutter_riverpod: ^2.4.0
-  flutter_svg: ^2.0.7
   http: ^1.1.0
   path_provider: ^2.1.1
   file_picker: ^6.0.0
@@ -58,6 +57,9 @@ dependencies:
   permission_handler: ^11.0.0
   fluttertoast: ^8.2.2
   glassfy_flutter: ^1.5.4
+  http_parser: ^4.0.2
+  mime: ^1.0.4
+  dio: ^5.3.3
 
 dev_dependencies:
   flutter_test:

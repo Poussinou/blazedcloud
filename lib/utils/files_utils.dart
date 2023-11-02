@@ -32,7 +32,6 @@ num computeTotalSizeGb(ListBucketResult list) {
   if (list.contents == null) {
     return 0;
   }
-  logger.i('Computing total size of ${list.contents!.length} items');
 
   num totalSize = 0;
   for (var item in list.contents!) {
@@ -296,7 +295,6 @@ Future<String> getExportDirectory(bool promptForDirectory) async {
     final directory = Directory(downloadDirectory);
     if (await directory.exists()) {
       // Hive has a download directory saved, so return
-      logger.i('Download directory: $downloadDirectory');
       return downloadDirectory;
     }
   } else if (!promptForDirectory) {
@@ -405,8 +403,6 @@ List<String> getFolderList(ListBucketResult list) {
     // add the folder key to the set
     folderKeys.add(folderKey);
   }
-
-  logger.i('Folder keys: $folderKeys');
 
   return folderKeys.toList();
 }

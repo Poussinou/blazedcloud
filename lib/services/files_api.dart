@@ -13,11 +13,10 @@ final httpClient = http.Client();
 Future<bool> createFolder(String folderKey) async {
   // upload a file with the name folderKey + "/.blazed-placeholder"
   final filename = '$folderKey/.blazed-placeholder';
-
-  final uploadUrl =
-      await getUploadUrl(pb.authStore.model.id, filename, pb.authStore.token);
-
   final body = Uint8List.fromList([0]);
+
+  final uploadUrl = await getUploadUrl(
+      pb.authStore.model.id, filename, pb.authStore.token, body.length);
 
   final response = await httpClient.put(Uri.parse(uploadUrl), body: body);
   return response.statusCode == 200;
@@ -132,12 +131,16 @@ Future<ListBucketResult> getFilelist(
 }
 
 /// don't call directly. use uploadFile
-Future<String> getUploadUrl(String uid, String filename, String token) async {
+Future<String> getUploadUrl(
+    String uid, String filename, String token, int length,
+    {String contentType = "application/octet-stream"}) async {
   var headers = {'Authorization': 'Bearer $token'};
   var request =
       http.MultipartRequest('POST', Uri.parse('$backendUrl/data/up/$uid'));
   request.fields.addAll({
     'filename': filename,
+    'contentType': contentType,
+    'contentLength': length.toString()
   });
 
   request.headers.addAll(headers);
@@ -146,7 +149,6 @@ Future<String> getUploadUrl(String uid, String filename, String token) async {
 
   if (response.statusCode == 200) {
     final responseBody = await response.stream.bytesToString();
-    logger.d("Got upload url for $responseBody");
     return (responseBody);
   } else {
     logger.e(response.reasonPhrase);
@@ -160,7 +162,7 @@ Future<http.StreamedResponse> uploadFile(String uid, String fileKey,
     http.ByteStream bytes, String token, int length) async {
   logger.i("Uploading file $fileKey");
 
-  return await getUploadUrl(uid, fileKey, token)
+  return await getUploadUrl(uid, fileKey, token, length)
       .then((value) => uploadToUrl(value, fileKey, bytes, length));
 }
 

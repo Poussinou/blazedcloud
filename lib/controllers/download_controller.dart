@@ -47,7 +47,7 @@ class DownloadController {
     // pause thread if more than 3 downloads are running
     while (_ref
             .read(downloadStateProvider)
-            .where((element) => element.isDownloading)
+            .where((element) => element.isDownloading && !element.isError)
             .length >
         3) {
       await Future.delayed(const Duration(seconds: 1));

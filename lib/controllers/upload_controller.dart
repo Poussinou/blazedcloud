@@ -8,9 +8,11 @@ import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';
 import 'package:blazedcloud/services/notifications.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class UploadController {
   final ProviderRef<Object> _ref;
@@ -39,68 +41,61 @@ class UploadController {
 
     final token = pb.authStore.token;
     final fileKey = '$directory${platformFile.name}';
-
-    // create request
-    final uploadUrl = await getUploadUrl(uid, fileKey, token);
-    logger.i('Upload url: $uploadUrl');
-    final request = http.StreamedRequest("PUT", Uri.parse(uploadUrl));
+    final type =
+        lookupMimeType(platformFile.path!) ?? 'application/octet-stream';
 
     try {
-      final totalBytes = platformFile.size;
-      final bytes = platformFile.readStream!.asBroadcastStream();
+      final uploadUrl = await getUploadUrl(
+        uid,
+        fileKey,
+        token,
+        platformFile.size,
+        contentType: type,
+      );
+      logger.i('Upload url: $uploadUrl');
 
-      // Add a progress callback to the response stream
-      bytes.listen((data) {
-        // Calculate progress and update the upload state
-        uploadState.addTotalSent(data.length);
-        final sent = uploadState.sent;
-        final progress = sent / totalBytes;
-        uploadState.updateProgress(progress);
+      final dio = Dio();
+      bytes() async* {
+        yield* platformFile.readStream!;
+      }
 
-        // Update the upload state with the updated progress
-        uploadNotifier.updateUploadState(index, uploadState);
-      }, onError: (error) {
-        logger.e('Upload error: $error');
-        try {
-          request.sink.close();
-        } catch (e) {
-          logger.e('Error closing request sink: $e');
-        }
+      final multipartFile = MultipartFile.fromStream(
+        bytes,
+        platformFile.size,
+        filename: platformFile.name,
+        contentType: MediaType.parse(type),
+      );
 
-        // Handle any errors during the upload
-        uploadState.setError(error.toString());
-        uploadState.completed();
-        uploadNotifier.updateUploadState(index, uploadState);
+      final response = await dio.put(
+        uploadUrl,
+        data: multipartFile.finalize(),
+        options: Options(headers: {
+          "Content-Type": type,
+          "Content-Length": platformFile.size
+        }),
+        onSendProgress: (int sent, int total) {
+          uploadState.addTotalSent(total);
+          final progress = total / platformFile.size;
+          uploadState.updateProgress(progress);
+        },
+      );
 
-        updateUploadNotification();
-
-        _ref.invalidate(fileListProvider(""));
-      }, onDone: () {
-        logger.i('Upload done');
-
-        // Handle upload completion
-        uploadState.completed();
-        uploadNotifier.updateUploadState(index, uploadState);
-
-        updateUploadNotification();
-
-        _ref.invalidate(fileListProvider(""));
-      }, cancelOnError: true);
-
-      request.contentLength = totalBytes;
-      request.sink.addStream(bytes);
-      await httpClient.send(request).timeout(const Duration(seconds: 1));
-      _ref.invalidate(fileListProvider(""));
+      logger.i(
+          'Upload response: ${response.statusCode} ${response.statusMessage}');
     } catch (error) {
-      logger.e('Upload error: $error');
+      switch (error) {
+        case DioException():
+          final response = error.response;
+          logger.e('Error uploading file: ${error.message} - $response');
+        default:
+          logger.e('Upload error: $error');
+      }
 
       uploadState.setError(error.toString());
       uploadState.completed();
       uploadNotifier.updateUploadState(index, uploadState);
 
       updateUploadNotification();
-
-      request.sink.close();
     } finally {
       _ref.invalidate(fileListProvider(""));
       _ref.invalidate(combinedDataProvider(pb.authStore.model.id));
