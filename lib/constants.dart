@@ -10,6 +10,6 @@ import 'package:pocketbase/pocketbase.dart';
 // dev
 //const String backendUrl = "https://mavhack.hopto.org:8099";
 // prod
-const String backendUrl = "https://blazed-cloud-pb.fly.dev";
+const String backendUrl = "https://pb.blazedcloud.com";
 
 var pb = PocketBase(backendUrl, authStore: CustomAuthStore());

@@ -16,7 +16,8 @@ Future<bool> createFolder(String folderKey) async {
   final body = Uint8List.fromList([0]);
 
   final uploadUrl = await getUploadUrl(
-      pb.authStore.model.id, filename, pb.authStore.token, body.length);
+      pb.authStore.model.id, filename, pb.authStore.token, body.length,
+      contentType: "");
 
   final response = await httpClient.put(Uri.parse(uploadUrl), body: body);
   return response.statusCode == 200;

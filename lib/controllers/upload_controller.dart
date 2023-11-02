@@ -79,6 +79,7 @@ class UploadController {
           uploadState.updateProgress(progress);
         },
       );
+      uploadState.completed();
 
       logger.i(
           'Upload response: ${response.statusCode} ${response.statusMessage}');
