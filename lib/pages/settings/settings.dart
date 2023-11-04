@@ -5,6 +5,7 @@ import 'package:blazedcloud/main.dart';
 import 'package:blazedcloud/models/pocketbase/user.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsGroup.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsItem.dart';
+import 'package:blazedcloud/providers/glassfy_providers.dart';
 import 'package:blazedcloud/providers/pb_providers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userData = ref.watch(accountUserProvider(pb.authStore.model.id));
+    final isPremium = ref.watch(premiumProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +48,7 @@ class SettingsScreen extends ConsumerWidget {
               CustomSettingsGroup(
                 items: [
                   signOutSetting(context),
-                  deleteAccountSetting(context),
+                  deleteAccountSetting(context, isPremium),
                 ],
               ),
             ],
@@ -56,7 +58,8 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  CustomSettingsItem deleteAccountSetting(BuildContext context) {
+  CustomSettingsItem deleteAccountSetting(
+      BuildContext context, bool isPremium) {
     return CustomSettingsItem(
       onTap: () {
         // ask the user to confirm
@@ -65,8 +68,9 @@ class SettingsScreen extends ConsumerWidget {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Delete account'),
-              content: const Text(
-                  'Are you sure you want to delete your account? This is irreversible.\n\nPlease note, you will need to cancel your subscription through the play store manually (if you have one)'),
+              content: Text(isPremium
+                  ? 'Are you sure you want to delete your account? This is irreversible.\n\nPlease note, you will need to cancel your subscription through the play store manually'
+                  : 'Are you sure you want to delete your account? This is irreversible.'),
               actions: [
                 TextButton(
                   child: const Text('CANCEL'),
