@@ -8,7 +8,6 @@ import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:glassfy_flutter/glassfy_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lottie/lottie.dart';
@@ -16,15 +15,6 @@ import 'package:pocketbase/pocketbase.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    logger.i("Initializing Glassfy");
-    await Glassfy.initialize('e7e4e5d11b2f48169f26e930a660862b',
-        watcherMode: false);
-    logger.i("Glassfy initialized");
-  } catch (e) {
-    logger.w("Glassfy failed to initialize: $e");
-  }
 
   await Hive.initFlutter();
 
