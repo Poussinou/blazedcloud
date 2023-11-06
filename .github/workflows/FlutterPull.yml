@@ -1,20 +1,50 @@
-name: Flutter-Pull-Request
+name: Flutter
 on:
   pull_request:
     branches: [ main ]
+
 jobs:
   deploy:
     name: Build app
     runs-on: ubuntu-latest
+    
+    # Define caching key
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+
     steps:
       - uses: actions/checkout@v3
+
+      # Cache Flutter dependencies
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/*.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-
+
+      # Cache Flutter SDK
+      - name: Cache Flutter SDK
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.flutter
+          key: flutter-${{ runner.os }}-${{ hashFiles('**/flutter_version') }}
+          restore-keys: |
+            flutter-${{ runner.os }}-
+
       - uses: actions/setup-java@v2
         with:
-            distribution: 'zulu'
-            java-version: '11'
+          distribution: 'zulu'
+          java-version: '11'
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.13.9'
+
       - run: flutter pub get
       - run: flutter test
       - run: flutter build apk
