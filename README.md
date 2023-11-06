@@ -2,6 +2,16 @@
 
 ![logo](https://github.com/TheRedSpy15/blazedcloud/assets/32081703/640a966a-e8fa-4a8d-b0da-4e0fd0abff2e)
 
+![Alt](https://repobeats.axiom.co/api/embed/ed8f2fa1e7b0d3aa5e3ef7d1c174533ef59e32e3.svg "Repobeats analytics image")
+
+## TLDR
+
+Simple, minimalistic file backup provider built with Flutter and Pocketbase
+
+Backend repo: https://github.com/TheRedSpy15/blazed-cloud-pb
+
+
+## Our shamless ChatGPT generated description:
 
 🌐 Welcome to Blazed Cloud, your go-to cloud storage solution for a seamless and secure file management experience! 🚀
 
