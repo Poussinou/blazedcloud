@@ -11,7 +11,7 @@ Simple, minimalistic file backup provider built with Flutter and Pocketbase
 Backend repo: https://github.com/TheRedSpy15/blazed-cloud-pb
 
 
-## Our shamless ChatGPT generated description:
+## Our shamelessly ChatGPT generated description:
 
 🌐 Welcome to Blazed Cloud, your go-to cloud storage solution for a seamless and secure file management experience! 🚀
 
