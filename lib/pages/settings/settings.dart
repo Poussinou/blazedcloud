@@ -1,8 +1,9 @@
-import 'package:babstrap_settings_screen/babstrap_settings_screen.dart';
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/main.dart';
 import 'package:blazedcloud/models/pocketbase/user.dart';
+import 'package:blazedcloud/pages/settings/custom_babstrap/icon_style.dart'
+    as babstrap;
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsGroup.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsItem.dart';
 import 'package:blazedcloud/providers/pb_providers.dart';
@@ -133,7 +134,7 @@ class SettingsScreen extends ConsumerWidget {
       onTap: () {},
       icons: CupertinoIcons.at,
       trailing: const SizedBox.shrink(),
-      iconStyle: IconStyle(),
+      iconStyle: babstrap.IconStyle(),
       title: 'Change Download Location',
       subtitle: "Current: ",
     );
@@ -160,7 +161,7 @@ class SettingsScreen extends ConsumerWidget {
       },
       icons: CupertinoIcons.at,
       trailing: const SizedBox.shrink(),
-      iconStyle: IconStyle(),
+      iconStyle: babstrap.IconStyle(),
       title: 'Change Email',
       subtitle: "Will send a link to your email to complete the change",
     );
@@ -172,7 +173,7 @@ class SettingsScreen extends ConsumerWidget {
       onTap: () {},
       icons: CupertinoIcons.at,
       trailing: const SizedBox.shrink(),
-      iconStyle: IconStyle(),
+      iconStyle: babstrap.IconStyle(),
       title: 'View on Github',
     );
   }
@@ -197,7 +198,7 @@ class SettingsScreen extends ConsumerWidget {
             }));
       },
       icons: CupertinoIcons.lock_shield_fill,
-      iconStyle: IconStyle(),
+      iconStyle: babstrap.IconStyle(),
       trailing: const SizedBox.shrink(),
       title: 'Change Password',
       subtitle: "Will send a link to your email to reset your password",

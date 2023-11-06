@@ -1,4 +1,4 @@
-import 'package:babstrap_settings_screen/src/settings_screen_utils.dart';
+import 'package:blazedcloud/pages/settings/custom_babstrap/setting_screen_utils.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsItem.dart';
 import 'package:flutter/material.dart';
 
