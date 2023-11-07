@@ -1,8 +1,9 @@
 name: Flutter
 on:
+  pull_request:
+    branches: [master]
   push:
-    branches:
-      - main
+    branches: [master]
 
 jobs:
   deploy:
@@ -16,36 +17,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      # Cache Flutter dependencies
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ hashFiles('**/*.lock') }}
-          restore-keys: |
-            pub-${{ runner.os }}-
-
-      # Cache Flutter SDK
-      - name: Cache Flutter SDK
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.flutter
-          key: flutter-${{ runner.os }}-${{ hashFiles('**/flutter_version') }}
-          restore-keys: |
-            flutter-${{ runner.os }}-
-
-      - uses: actions/setup-java@v2
-        with:
-          distribution: 'zulu'
-          java-version: '11'
-
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.13.9'
-
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
+          cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
+          architecture: x64 # optional, x64 or arm64
+      - run: flutter --version
       - run: flutter pub get
       - run: flutter test
       - run: flutter build apk
