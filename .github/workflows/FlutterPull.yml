@@ -18,7 +18,7 @@ jobs:
 
       # Cache Flutter dependencies
       - name: Cache Flutter dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3.3.2
         with:
           path: |
             ~/.pub-cache
