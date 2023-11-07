@@ -18,7 +18,7 @@ class DownloadController {
   /// returns true if the download was started, false if the file already exists or is already being downloaded
   Future<bool> startDownload(String uid, String fileKey) async {
     // Get the app's internal storage directory
-    final appDocDir = await getExportDirectory(true);
+    final appDocDir = await getExportDirectoryFromHive();
     final filePath = '$appDocDir/$fileKey'; // Define the file path
 
     if (appDocDir.isEmpty) {
@@ -46,7 +46,7 @@ class DownloadController {
 
     // pause thread if more than 3 downloads are running
     while (_ref
-            .read(downloadStateProvider)
+            .watch(downloadStateProvider)
             .where((element) => element.isDownloading && !element.isError)
             .length >
         3) {
