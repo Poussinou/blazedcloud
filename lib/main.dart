@@ -156,7 +156,7 @@ class LandingPage extends ConsumerWidget {
       error: (err, stack) {
         logger.e("Server Health check failed: $err");
         return FutureBuilder(
-            future: getExportDirectory(false),
+            future: getExportDirectoryFromHive(),
             builder: (context, snapshot) {
               return Scaffold(
                 body: Center(

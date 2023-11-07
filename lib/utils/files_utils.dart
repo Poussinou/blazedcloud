@@ -8,21 +8,23 @@ import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/files_api/list_files.dart';
 import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart';
+import 'package:encrypt/encrypt.dart' as encryption;
 import 'package:file_picker/file_picker.dart' as fp;
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
-bool CheckIfAccessToDownloadDirectoryIsGranted() {
-  // Check if the user has granted access to the download directory
-  final box = Hive.box<String>('files');
-  final downloadDirectory = box.get('downloadDirectory');
+/// Check if the user has granted access to the download directory
+Future<bool> checkIfAccessToDownloadDirectoryIsGranted() async {
+  final downloadDirectory = await getExportDirectoryFromHive();
+  final downloadFolder = File(downloadDirectory);
 
-  if (downloadDirectory == null) {
+  if (downloadDirectory.isEmpty) {
     return false;
+  } else if (downloadFolder.existsSync()) {
+    return true;
   } else {
     return true;
   }
@@ -57,18 +59,19 @@ Future<File> decryptFile(File encryptedFile) async {
   // Hash the password to create a 32-byte key (not needed for Fernet)
   //final keyHash = sha256.convert(utf8.encode(password)).bytes;
   //final key = Key(Uint8List.fromList(keyHash));
-  final key = Key.fromUtf8('my32lengthsupersecretnooneknows1');
-  final b64key = Key.fromBase64(base64Url.encode(key.bytes));
+  final key = encryption.Key.fromUtf8('my32lengthsupersecretnooneknows1');
+  final b64key = encryption.Key.fromBase64(base64Url.encode(key.bytes));
 
   try {
     // Read the encrypted file content
     final Uint8List encryptedContent = await encryptedFile.readAsBytes();
 
     // Create a Fernet decrypter with the key
-    final decrypter = Encrypter(Fernet(b64key));
+    final decrypter = encryption.Encrypter(encryption.Fernet(b64key));
 
     // Decrypt the encrypted content
-    final decryptedBytes = decrypter.decryptBytes(Encrypted(encryptedContent));
+    final decryptedBytes =
+        decrypter.decryptBytes(encryption.Encrypted(encryptedContent));
 
     // Get the application's temporary directory
     final tempDir = await getApplicationCacheDirectory();
@@ -91,13 +94,13 @@ Future<http.StreamedResponse> decryptStreamedResponse(
   // hash the password to 32 bits
   final keyHash =
       Uint8List.fromList(sha512.convert(utf8.encode(password)).bytes);
-  final key = Key(Uint8List.fromList(keyHash.sublist(0, 32)));
+  final key = encryption.Key(Uint8List.fromList(keyHash.sublist(0, 32)));
 
   // Create an IV buffer to store the IV received from the encrypted stream
   final ivBuffer = <int>[];
 
   // Initialize the Salsa20 decryption algorithm with the password
-  final encrypter = Encrypter(Salsa20(key));
+  final encrypter = encryption.Encrypter(encryption.Salsa20(key));
 
   // Function to handle incoming data and decrypt
   final decryptedStream = encryptedResponse.stream.transform<Uint8List>(
@@ -109,14 +112,15 @@ Future<http.StreamedResponse> decryptStreamedResponse(
           ivBuffer.addAll(data.take(8 - ivBuffer.length));
           if (ivBuffer.length == 8) {
             // We have enough IV bytes, initialize a new encrypter with IV
-            final iv = IV(Uint8List.fromList(ivBuffer));
-            final encrypted = Encrypted(Uint8List.fromList(data.sublist(8)));
+            final iv = encryption.IV(Uint8List.fromList(ivBuffer));
+            final encrypted =
+                encryption.Encrypted(Uint8List.fromList(data.sublist(8)));
             final decryptedData = encrypter.decryptBytes(encrypted, iv: iv);
             sink.add(Uint8List.fromList(decryptedData));
           }
         } else {
           // Decrypt the data using the existing IV
-          final encrypted = Encrypted(Uint8List.fromList(data));
+          final encrypted = encryption.Encrypted(Uint8List.fromList(data));
           final decryptedData = encrypter.decryptBytes(encrypted);
           sink.add(Uint8List.fromList(decryptedData));
         }
@@ -154,16 +158,16 @@ Future<http.ByteStream> encryptByteStream(
   // hash the password to 32 bits
   final keyHash =
       Uint8List.fromList(sha512.convert(utf8.encode(password)).bytes);
-  final key = Key(Uint8List.fromList(keyHash.sublist(0, 32)));
+  final key = encryption.Key(Uint8List.fromList(keyHash.sublist(0, 32)));
 
   // Generate a random IV (Initialization Vector)
-  final iv = IV.fromSecureRandom(8);
+  final iv = encryption.IV.fromSecureRandom(8);
 
   // Create a StreamController to transform the input stream and make it broadcast
   final controller = StreamController<List<int>>.broadcast();
 
   // Encrypt the input data with the IV
-  final encrypter = Encrypter(Salsa20(key));
+  final encrypter = encryption.Encrypter(encryption.Salsa20(key));
 
   inputByteStream.listen(
     (data) {
@@ -198,8 +202,8 @@ Future<File> encryptFile(File inputFile) async {
   // Hash the password to create a 32-byte key (not needed for Fernet)
   //final keyHash = sha256.convert(utf8.encode(password)).bytes;
   //final key = Key(Uint8List.fromList(keyHash));
-  final key = Key.fromUtf8('my32lengthsupersecretnooneknows1');
-  final b64key = Key.fromBase64(base64Url.encode(key.bytes));
+  final key = encryption.Key.fromUtf8('my32lengthsupersecretnooneknows1');
+  final b64key = encryption.Key.fromBase64(base64Url.encode(key.bytes));
 
   if (!await inputFile.exists()) {
     throw FileSystemException('File not found: ${inputFile.path}');
@@ -209,7 +213,7 @@ Future<File> encryptFile(File inputFile) async {
   final Uint8List fileContent = await inputFile.readAsBytes();
 
   // Create a Fernet encrypter with the generated key
-  final encrypter = Encrypter(Fernet(b64key));
+  final encrypter = encryption.Encrypter(encryption.Fernet(b64key));
 
   // Encrypt the file content
   final encryptedBytes = encrypter.encryptBytes(fileContent);
@@ -284,8 +288,8 @@ List<String> fuzzySearch(String query, List<String> list) {
   return filteredResults;
 }
 
-/// Get the download directory from Hive or prompt the user to select one.
-Future<String> getExportDirectory(bool promptForDirectory) async {
+/// Get the download directory from Hive
+Future<String> getExportDirectoryFromHive() async {
   // check if Hive has a download directory saved
   final box = await Hive.openBox<String>('files');
   final downloadDirectory = box.get('downloadDirectory');
@@ -297,16 +301,13 @@ Future<String> getExportDirectory(bool promptForDirectory) async {
       // Hive has a download directory saved, so return
       return downloadDirectory;
     }
-  } else if (!promptForDirectory) {
-    return '';
   }
 
-  // toast
-  Fluttertoast.showToast(
-      msg: "Select a folder to store downloaded files",
-      toastLength: Toast.LENGTH_LONG,
-      fontSize: 16.0);
+  return '';
+}
 
+/// prompt user to select a directory for downloads
+Future<String> getExportDirectoryFromPicker() async {
   final result = await fp.FilePicker.platform.getDirectoryPath();
 
   if (result != null) {
@@ -314,6 +315,7 @@ Future<String> getExportDirectory(bool promptForDirectory) async {
     logger.i('User selected directory: $result');
 
     // Save the directory to Hive
+    final box = await Hive.openBox<String>('files');
     box.put('downloadDirectory', result);
 
     return result;
@@ -457,7 +459,7 @@ List<String> getKeysInFolder(
 
 Future<File> getOfflineFile(String filename) async {
   // Get the directory for the app's internal storage
-  final directory = await getExportDirectory(false);
+  final directory = await getExportDirectoryFromHive();
 
   // Construct the file path using the filename
   final filePath = File('$directory/$filename');
@@ -504,7 +506,7 @@ bool isFileBeingDownloaded(String file, List<DownloadState> downloads) {
 Future<bool> isFileSavedOffline(String filename) async {
   // Get the directory for the app's internal storage
   //final directory = await getApplicationDocumentsDirectory();
-  final directory = await getExportDirectory(false);
+  final directory = await getExportDirectoryFromHive();
 
   // Construct the file path using the filename
   final filePath = File('$directory/$filename');
@@ -539,6 +541,40 @@ void openFile(File file) {
       logger.e('File does not exist: ${file.path}');
     }
   });
+}
+
+/// Show dialog explaining to the user that they need to select a directory in the next step
+Future<String> promptForDownloadDirectory(BuildContext context) async {
+  String? directory = await showDialog<String>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Select download directory'),
+        content: const Text(
+            'Please select a directory where you would like to download your files in the next screen.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, 'select');
+            },
+            child: const Text('Pick Folder'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (directory == 'select') {
+    directory = await getExportDirectoryFromPicker();
+  }
+
+  return '';
 }
 
 enum FileType { image, video, audio, doc, other, folder }

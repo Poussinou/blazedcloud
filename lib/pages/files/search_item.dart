@@ -49,7 +49,7 @@ class SearchItem extends ConsumerWidget {
               if (value == 'open') {
                 openItem(fileKey, ref);
               } else if (value == 'save') {
-                downloadItem(fileKey, downloadController);
+                downloadItem(fileKey, downloadController, ref.context);
               } else if (value == 'delete') {
                 // ask for confirmation before deleting
                 deleteItem(fileKey, context, ref);
