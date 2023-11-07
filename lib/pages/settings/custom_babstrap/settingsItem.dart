@@ -1,5 +1,5 @@
-import 'package:babstrap_settings_screen/src/icon_style.dart';
-import 'package:babstrap_settings_screen/src/settings_screen_utils.dart';
+import 'package:blazedcloud/pages/settings/custom_babstrap/icon_style.dart';
+import 'package:blazedcloud/pages/settings/custom_babstrap/setting_screen_utils.dart';
 import 'package:flutter/material.dart';
 
 class CustomSettingsItem extends StatelessWidget {
