@@ -142,7 +142,7 @@ class SettingsScreen extends ConsumerWidget {
       trailing: const SizedBox.shrink(),
       iconStyle: babstrap.IconStyle(),
       title: 'Change Download Location',
-      subtitle: "Current: ",
+      subtitle: "Current: ${getExportDirectoryFromHive()}",
     );
   }
 
