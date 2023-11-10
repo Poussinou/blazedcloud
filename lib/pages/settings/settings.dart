@@ -7,6 +7,7 @@ import 'package:blazedcloud/pages/settings/custom_babstrap/icon_style.dart'
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsGroup.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsItem.dart';
 import 'package:blazedcloud/providers/pb_providers.dart';
+import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -35,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               CustomSettingsGroup(
                 items: [
-                  downloadLocationChangeSetting(userData, context),
+                  downloadLocationChangeSetting(context),
                 ],
               ),
               CustomSettingsGroup(
@@ -46,6 +48,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               CustomSettingsGroup(
                 items: [
+                  githubSetting(context),
+                  githubBackendSetting(context),
                   signOutSetting(context),
                   deleteAccountSetting(context),
                 ],
@@ -128,11 +132,13 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  CustomSettingsItem downloadLocationChangeSetting(
-      AsyncValue<User> userData, BuildContext context) {
+  CustomSettingsItem downloadLocationChangeSetting(BuildContext context) {
     return CustomSettingsItem(
-      onTap: () {},
-      icons: CupertinoIcons.at,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        promptForDownloadDirectory(context);
+      },
+      icons: CupertinoIcons.folder,
       trailing: const SizedBox.shrink(),
       iconStyle: babstrap.IconStyle(),
       title: 'Change Download Location',
@@ -145,13 +151,10 @@ class SettingsScreen extends ConsumerWidget {
     return CustomSettingsItem(
       onTap: () {
         HapticFeedback.mediumImpact();
-        userData.whenData((value) => pb
-                .collection('users')
-                .requestEmailChange(pb.authStore.model.email)
-                .then((value) {
+        userData.whenData((user) =>
+            pb.collection('users').requestEmailChange(user.email).then((value) {
               ScaffoldMessenger.of(context)
                   .showSnackBar(const SnackBar(content: Text("Request Sent!")));
-              Navigator.of(context).pop();
             }).onError((error, stackTrace) {
               logger.e("Error sending request: $error");
               ScaffoldMessenger.of(context).showSnackBar(
@@ -167,11 +170,38 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  CustomSettingsItem githubSetting(
-      AsyncValue<User> userData, BuildContext context) {
+  CustomSettingsItem githubBackendSetting(BuildContext context) {
     return CustomSettingsItem(
-      onTap: () {},
-      icons: CupertinoIcons.at,
+      onTap: () {
+        final url = Uri.parse("https://github.com/TheRedSpy15/blazed-cloud-pb");
+        canLaunchUrl(url).then((canLaunch) {
+          if (canLaunch) {
+            launchUrl(url);
+          } else {
+            logger.e("Can't launch url: $url");
+          }
+        });
+      },
+      icons: CupertinoIcons.doc_text,
+      trailing: const SizedBox.shrink(),
+      iconStyle: babstrap.IconStyle(),
+      title: 'View backend on Github',
+    );
+  }
+
+  CustomSettingsItem githubSetting(BuildContext context) {
+    return CustomSettingsItem(
+      onTap: () {
+        final url = Uri.parse("https://github.com/TheRedSpy15/blazedcloud");
+        canLaunchUrl(url).then((canLaunch) {
+          if (canLaunch) {
+            launchUrl(url);
+          } else {
+            logger.e("Can't launch url: $url");
+          }
+        });
+      },
+      icons: CupertinoIcons.doc_text,
       trailing: const SizedBox.shrink(),
       iconStyle: babstrap.IconStyle(),
       title: 'View on Github',
@@ -183,13 +213,12 @@ class SettingsScreen extends ConsumerWidget {
     return CustomSettingsItem(
       onTap: () {
         HapticFeedback.mediumImpact();
-        userData.whenData((value) => pb
+        userData.whenData((user) => pb
                 .collection('users')
-                .requestPasswordReset(pb.authStore.model.email)
+                .requestPasswordReset(user.email)
                 .then((value) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Password reset email sent!")));
-              Navigator.of(context).pop();
             }).onError((error, stackTrace) {
               logger.e("Error sending password reset email: $error");
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
