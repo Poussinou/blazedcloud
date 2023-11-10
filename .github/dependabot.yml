@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "flutter"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "trickle"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    target-branches:
+      - "development"

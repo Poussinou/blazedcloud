@@ -48,9 +48,21 @@ void deleteItem(String fileKey, BuildContext context, WidgetRef ref) {
   );
 }
 
-void downloadItem(String fileKey, DownloadController downloadController) {
-  downloadController.startDownload(pb.authStore.model.id, fileKey);
-  HapticFeedback.vibrate();
+void downloadItem(String fileKey, DownloadController downloadController,
+    BuildContext context) {
+  checkIfAccessToDownloadDirectoryIsGranted().then((granted) {
+    if (!granted) {
+      promptForDownloadDirectory(context);
+    } else if (granted) {
+      downloadController.startDownload(pb.authStore.model.id, fileKey);
+      HapticFeedback.vibrate();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Downloading ${getFileName(fileKey)}'),
+        ),
+      );
+    }
+  });
 }
 
 void openItem(String fileKey, WidgetRef ref) {
@@ -215,7 +227,7 @@ class FileItem extends ConsumerWidget {
               if (value == 'open') {
                 openItem(fileKey, ref);
               } else if (value == 'save') {
-                downloadItem(fileKey, downloadController);
+                downloadItem(fileKey, downloadController, context);
               } else if (value == 'delete') {
                 // ask for confirmation before deleting
                 deleteItem(fileKey, context, ref);

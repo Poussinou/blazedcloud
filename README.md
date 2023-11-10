@@ -2,6 +2,18 @@
 
 ![logo](https://github.com/TheRedSpy15/blazedcloud/assets/32081703/640a966a-e8fa-4a8d-b0da-4e0fd0abff2e)
 
+[![Flutter](https://github.com/TheRedSpy15/blazedcloud/actions/workflows/flutter.yml/badge.svg)](https://github.com/TheRedSpy15/blazedcloud/actions/workflows/flutter.yml)
+
+![Alt](https://repobeats.axiom.co/api/embed/ed8f2fa1e7b0d3aa5e3ef7d1c174533ef59e32e3.svg "Repobeats analytics image")
+
+## TLDR
+
+Simple, minimalistic file backup provider built with Flutter and Pocketbase
+
+Backend repo: https://github.com/TheRedSpy15/blazed-cloud-pb
+
+
+## Our shamelessly ChatGPT generated description:
 
 🌐 Welcome to Blazed Cloud, your go-to cloud storage solution for a seamless and secure file management experience! 🚀
 
@@ -28,3 +40,7 @@ Join the Blazed Cloud community! Contribute to the development, report issues, a
 Experience cloud storage the way it should be—simple, secure, and transparent. Download Blazed Cloud now and take control of your digital world.
 
 🔥 Blaze a trail in the cloud with Blazed Cloud! 🔥
+
+# Download
+
+<a href='https://play.google.com/store/apps/details?id=com.chancesoftwarellc.blazedcloud&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png'/></a>

@@ -45,23 +45,26 @@ void delete(String folderKey, BuildContext context, WidgetRef ref) {
 
 void downloadFolder(String folderKey, ListBucketResult list,
     DownloadController downloadController, BuildContext context) {
-  logger.i('Downloading $folderKey');
-
-  getKeysInFolder(list, folderKey, true).forEach((fileKey) {
-    logger.i('Downloading $fileKey from $folderKey');
-    downloadController.startDownload(pb.authStore.model.id, fileKey);
+  checkIfAccessToDownloadDirectoryIsGranted().then((granted) {
+    if (!granted) {
+      promptForDownloadDirectory(context);
+    } else if (granted) {
+      logger.i('Downloading $folderKey');
+      getKeysInFolder(list, folderKey, true).forEach((fileKey) {
+        logger.i('Downloading $fileKey from $folderKey');
+        downloadController.startDownload(pb.authStore.model.id, fileKey);
+      });
+      HapticFeedback.vibrate();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Downloading all files from ${getFolderName(folderKey)}',
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   });
-  HapticFeedback.vibrate();
-
-  // snackbar
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Downloading all files from ${getFolderName(folderKey)}',
-      ),
-      duration: const Duration(seconds: 4),
-    ),
-  );
 }
 
 class FolderItem extends ConsumerWidget {
