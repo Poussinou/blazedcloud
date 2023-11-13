@@ -37,7 +37,7 @@ class Dashboard extends ConsumerWidget {
             icon: badges.Badge(
                 badgeContent: Text("${transfers.length}"),
                 showBadge: transfers.isNotEmpty,
-                child: const Icon(Icons.pending)),
+                child: const Icon(Icons.cloud_sync)),
             label: 'Transfers',
           ),
           const NavigationDestination(
