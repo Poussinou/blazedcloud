@@ -36,6 +36,7 @@ class DownloadState {
 
   void setError(String errorMessage) {
     isError = true;
+    isDownloading = false;
     this.errorMessage = errorMessage;
     logger.e(errorMessage);
   }

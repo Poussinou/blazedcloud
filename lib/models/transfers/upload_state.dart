@@ -39,6 +39,7 @@ class UploadState {
 
   void setError(String errorMessage) {
     isError = true;
+    isUploading = false;
     this.errorMessage = errorMessage;
   }
 
