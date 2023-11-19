@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
@@ -13,11 +17,55 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
+import 'package:workmanager/workmanager.dart';
 
 class UploadController {
   final ProviderRef<Object> _ref;
 
-  UploadController(this._ref);
+  UploadController(this._ref) {
+    final port = _ref.read(uploadReceivePortProvider);
+    IsolateNameServer.registerPortWithName(port.sendPort, "uploader");
+    port.listen((dynamic data) async {
+      try {
+        final uploadState = UploadState.fromJson(jsonDecode(data));
+
+        final uploadNotifier = _ref.read(uploadStateProvider.notifier);
+
+        uploadNotifier.updateUploadStateByKey(
+            uploadState.uploadKey, uploadState);
+
+        updateUploadNotification();
+
+        if (!uploadState.isUploading) {
+          _ref.invalidate(fileListProvider(""));
+          _ref.invalidate(combinedDataProvider(pb.authStore.model.id));
+        }
+      } catch (error) {
+        logger.e('Error updating upload state: $error \n $data');
+      }
+    });
+  }
+
+  /// start an upload with workmanager
+  void queueUpload(String uid, String s3Directory, String localPath,
+      String localName, int size) async {
+    Workmanager().registerOneOffTask(localPath.hashCode.toString(), "upload",
+        constraints: Constraints(
+          networkType: NetworkType.unmetered,
+        ),
+        tag: localPath,
+        backoffPolicy: BackoffPolicy.linear,
+        outOfQuotaPolicy: OutOfQuotaPolicy.run_as_non_expedited_work_request,
+        existingWorkPolicy: ExistingWorkPolicy.keep,
+        inputData: {
+          "uid": uid,
+          "token": pb.authStore.token,
+          "s3Directory": s3Directory,
+          "localPath": localPath,
+          "localName": localName,
+          "size": size,
+        });
+  }
 
   void selectFilesToUpload(String directory) async {
     final selection = await FilePicker.platform.pickFiles(
@@ -27,59 +75,94 @@ class UploadController {
       final uid = pb.authStore.model.id;
 
       for (final fileToUpload in selection.files) {
-        startUpload(uid, fileToUpload, directory);
+        queueUpload(uid, directory, fileToUpload.path!, fileToUpload.name,
+            fileToUpload.size);
       }
     }
   }
 
-  // TODO: move some of the logic to file_api.dart
-  Future<void> startUpload(
-      String uid, PlatformFile platformFile, String directory) async {
-    final uploadState = UploadState.inProgress(platformFile.path!);
-    final uploadNotifier = _ref.read(uploadStateProvider.notifier);
-    final int index = uploadNotifier.addUpload(uploadState);
+  void updateUploadNotification() {
+    NotificationService().initNotification().then((_) => NotificationService()
+        .showUploadNotification(_ref
+            .read(uploadStateProvider)
+            .where((element) => element.isUploading && !element.isError)
+            .length));
+  }
 
-    final token = pb.authStore.token;
-    final fileKey = '$directory${platformFile.name}';
-    final type =
-        lookupMimeType(platformFile.path!) ?? 'application/octet-stream';
+  static Future<bool> startUpload(String uid, String localPath,
+      String localName, int size, String s3Directory, String token) async {
+    final uploadState = UploadState.inProgress(localPath);
+    SendPort? sendPort = IsolateNameServer.lookupPortByName("uploader");
+    const Duration rateLimit =
+        Duration(seconds: 1); // Adjust the duration as needed
+    DateTime lastDataSentTime = DateTime.now();
 
+    final fileKey = '$s3Directory$localName';
+    final type = lookupMimeType(localPath) ?? 'application/octet-stream';
+
+    final completer = Completer<bool>();
     try {
+      final file = File(localPath);
+
       final uploadUrl = await getUploadUrl(
         uid,
         fileKey,
         token,
-        platformFile.size,
+        size,
         contentType: type,
       );
       logger.i('Upload url: $uploadUrl');
 
       final dio = Dio();
       bytes() async* {
-        yield* platformFile.readStream!;
+        yield* file.openRead();
       }
 
       final multipartFile = MultipartFile.fromStream(
         bytes,
-        platformFile.size,
-        filename: platformFile.name,
+        size,
+        filename: localName,
         contentType: MediaType.parse(type),
       );
 
       final response = await dio.put(
         uploadUrl,
         data: multipartFile.finalize(),
-        options: Options(headers: {
-          "Content-Type": type,
-          "Content-Length": platformFile.size
-        }),
+        options:
+            Options(headers: {"Content-Type": type, "Content-Length": size}),
         onSendProgress: (int sent, int total) {
           uploadState.addTotalSent(total);
-          final progress = total / platformFile.size;
+          final progress = total / size;
           uploadState.updateProgress(progress);
+
+          // send progress to the UI
+          // The port might be null if the main isolate is not running.
+          if (sendPort != null) {
+            // rate limit to prevent spamming the main isolate
+            if (DateTime.now().difference(lastDataSentTime) >= rateLimit) {
+              try {
+                sendPort!.send(jsonEncode(uploadState.toJson()));
+              } catch (error) {
+                logger.e('send port error ($fileKey): $error');
+              }
+              lastDataSentTime = DateTime.now();
+            }
+          } else {
+            sendPort = IsolateNameServer.lookupPortByName("uploader");
+          }
         },
       );
       uploadState.completed();
+      completer.complete(true);
+
+      // send progress to the UI
+      if (sendPort != null) {
+        try {
+          sendPort!.send(jsonEncode(uploadState.toJson()));
+        } catch (error) {
+          logger.e('send port error ($fileKey): $error');
+        }
+      }
 
       logger.i(
           'Upload response: ${response.statusCode} ${response.statusMessage}');
@@ -94,20 +177,18 @@ class UploadController {
 
       uploadState.setError(error.toString());
       uploadState.completed();
-      uploadNotifier.updateUploadState(index, uploadState);
+      completer.complete(false);
 
-      updateUploadNotification();
-    } finally {
-      _ref.invalidate(fileListProvider(""));
-      _ref.invalidate(combinedDataProvider(pb.authStore.model.id));
+      // send progress to the UI
+      if (sendPort != null) {
+        try {
+          sendPort!.send(jsonEncode(uploadState.toJson()));
+        } catch (error) {
+          logger.e('send port error ($fileKey): $error');
+        }
+      }
     }
-  }
 
-  void updateUploadNotification() {
-    NotificationService().initNotification().then((_) => NotificationService()
-        .showUploadNotification(_ref
-            .read(uploadStateProvider)
-            .where((element) => element.isUploading && !element.isError)
-            .length));
+    return completer.future;
   }
 }

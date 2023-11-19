@@ -7,7 +7,7 @@ import 'package:blazedcloud/models/files_api/list_files.dart';
 import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:open_filex/open_filex.dart';
 
 /// Check if the user has granted access to the download directory
@@ -99,6 +99,8 @@ List<String> fuzzySearch(String query, List<String> list) {
 
 /// Get the download directory from Hive
 Future<String> getExportDirectoryFromHive() async {
+  await Hive.initFlutter();
+
   // check if Hive has a download directory saved
   final box = await Hive.openBox<String>('files');
   final downloadDirectory = box.get('downloadDirectory');

@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/log.dart';
@@ -9,16 +12,68 @@ import 'package:blazedcloud/services/files_api.dart';
 import 'package:blazedcloud/services/notifications.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workmanager/workmanager.dart';
 
 class DownloadController {
-  final ProviderRef<Object> _ref;
+  final ProviderRef<DownloadController> _ref;
 
-  DownloadController(this._ref);
+  DownloadController(this._ref) {
+    final port = _ref.read(downloadReceivePortProvider);
+    IsolateNameServer.registerPortWithName(port.sendPort, "downloader");
+    port.listen((dynamic data) async {
+      try {
+        final downloadState = DownloadState.fromJson(jsonDecode(data));
 
-  /// returns true if the download was started, false if the file already exists or is already being downloaded
-  Future<bool> startDownload(String uid, String fileKey) async {
-    // Get the app's internal storage directory
-    final appDocDir = await getExportDirectoryFromHive();
+        final downloadNotifier = _ref.read(downloadStateProvider.notifier);
+
+        downloadNotifier.updateDownloadStateByKey(
+            downloadState.downloadKey, downloadState);
+
+        updateDownloadNotification();
+      } catch (error) {
+        logger.e('Error updating download state: $error');
+      }
+    });
+  }
+
+  /// start a download with workmanager
+  void queueDownload(String uid, String fileKey) async {
+    getOfflineFile(fileKey).then((value) {
+      if (value.existsSync()) {
+        logger.i('File already exists: ${value.path}');
+        return false;
+      }
+    });
+
+    Workmanager().registerOneOffTask(fileKey.hashCode.toString(), "download",
+        constraints: Constraints(
+            networkType: NetworkType.unmetered, requiresStorageNotLow: true),
+        tag: fileKey,
+        backoffPolicy: BackoffPolicy.linear,
+        outOfQuotaPolicy: OutOfQuotaPolicy.run_as_non_expedited_work_request,
+        existingWorkPolicy: ExistingWorkPolicy.keep,
+        inputData: {
+          "uid": uid,
+          "fileKey": fileKey,
+          "exportDir": await getExportDirectoryFromHive(),
+          "token": pb.authStore.token,
+        });
+  }
+
+  void updateDownloadNotification() {
+    NotificationService().initNotification().then((_) => NotificationService()
+        .showDownloadNotification(_ref
+            .read(downloadStateProvider)
+            .where((element) => element.isDownloading && !element.isError)
+            .length));
+  }
+
+  /// returns true if the download was started, false if the file already exists or is already being downloaded.
+  ///
+  /// Call this directly to bypass using workmanager
+  static Future<bool> startDownload(
+      String uid, String fileKey, String token, String appDocDir) async {
+    SendPort? sendPort = IsolateNameServer.lookupPortByName("downloader");
     final filePath = '$appDocDir/$fileKey'; // Define the file path
 
     if (appDocDir.isEmpty) {
@@ -31,28 +86,10 @@ class DownloadController {
         logger.i('File already exists: ${value.path}');
         return false;
       }
-
-      if (isFileBeingDownloaded(fileKey, _ref.read(downloadStateProvider))) {
-        logger.i('File is already being downloaded: $fileKey');
-        return false;
-      }
     });
 
     final downloadState = DownloadState.inProgress(fileKey);
-    final downloadNotifier = _ref.read(downloadStateProvider.notifier);
-    final int index = downloadNotifier.addDownload(downloadState);
-
-    final token = pb.authStore.token;
-
-    // pause thread if more than 3 downloads are running
-    while (_ref
-            .watch(downloadStateProvider)
-            .where((element) => element.isDownloading && !element.isError)
-            .length >
-        3) {
-      await Future.delayed(const Duration(seconds: 1));
-    }
-
+    final completer = Completer<bool>();
     try {
       final response = await getFile(uid, fileKey, token);
 
@@ -72,63 +109,72 @@ class DownloadController {
       }
       final sink = file.openWrite();
 
-      response.stream.listen(
-        (data) {
-          // Handle data chunks and update downloadState.progress
-          final totalBytes = response.contentLength ?? 0;
-          progress += data.length / totalBytes;
-          downloadState.updateProgress(progress);
+      const Duration rateLimit =
+          Duration(seconds: 1); // Adjust the duration as needed
+      DateTime lastDataSentTime = DateTime.now();
 
-          // Update the download state with the updated progress
-          downloadNotifier.updateDownloadState(index, downloadState);
+      response.stream.listen((data) async {
+        final totalBytes = response.contentLength ?? 0;
+        progress += data.length / totalBytes;
+        downloadState.updateProgress(progress);
 
-          // Write the data to the file
-          sink.add(data);
-        },
-        onError: (error) {
-          sink.flush().then((_) => sink.close());
+        sink.add(data);
 
-          // Handle download error
-          downloadState.setError(error.toString());
+        // The port might be null if the main isolate is not running.
+        if (sendPort != null) {
+          // rate limit to prevent spamming the main isolate
+          if (DateTime.now().difference(lastDataSentTime) >= rateLimit) {
+            try {
+              sendPort!.send(jsonEncode(downloadState.toJson()));
+            } catch (error) {
+              logger.e('send port error ($fileKey): $error');
+            }
+            lastDataSentTime = DateTime.now();
+          }
+        } else {
+          sendPort = IsolateNameServer.lookupPortByName("downloader");
+        }
+      }, onError: (error) {
+        logger.e('Download error: $error');
+        sink.flush().then((_) => sink.close());
+        downloadState.setError(error.toString());
+        completer.complete(false);
 
-          // Update the download state with the error
-          downloadNotifier.updateDownloadState(index, downloadState);
+        if (sendPort != null) {
+          try {
+            sendPort!.send(jsonEncode(downloadState.toJson()));
+          } catch (error) {
+            logger.e('send port error ($fileKey): $error');
+          }
+        }
+      }, onDone: () {
+        logger.i('Download complete');
+        sink.flush().then((_) => sink.close());
+        downloadState.completed();
+        completer.complete(true);
 
-          updateDownloadNotification();
-        },
-        onDone: () {
-          sink.flush().then((_) => sink.close());
-
-          // Update the download state to reflect completion
-          downloadState.completed();
-
-          downloadNotifier.updateDownloadState(index, downloadState);
-
-          updateDownloadNotification();
-        },
-      );
-
-      updateDownloadNotification();
+        if (sendPort != null) {
+          try {
+            sendPort!.send(jsonEncode(downloadState.toJson()));
+          } catch (error) {
+            logger.e('send port error ($fileKey): $error');
+          }
+        }
+      }, cancelOnError: true);
     } catch (error) {
       logger.e('Download error: $error');
-
-      // Handle download error
       downloadState.setError(error.toString());
+      completer.complete(false);
 
-      // Update the download state with the error
-      downloadNotifier.updateDownloadState(index, downloadState);
-
-      updateDownloadNotification();
+      if (sendPort != null) {
+        try {
+          sendPort!.send(jsonEncode(downloadState.toJson()));
+        } catch (error) {
+          logger.e('send port error ($fileKey): $error');
+        }
+      }
     }
 
-    return true;
-  }
-
-  void updateDownloadNotification() {
-    NotificationService().initNotification().then((_) => NotificationService()
-        .showDownloadNotification(_ref
-            .read(downloadStateProvider)
-            .where((element) => element.isDownloading && !element.isError)
-            .length));
+    return completer.future;
   }
 }

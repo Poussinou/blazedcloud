@@ -52,7 +52,7 @@ void downloadFolder(String folderKey, ListBucketResult list,
       logger.i('Downloading $folderKey');
       getKeysInFolder(list, folderKey, true).forEach((fileKey) {
         logger.i('Downloading $fileKey from $folderKey');
-        downloadController.startDownload(pb.authStore.model.id, fileKey);
+        downloadController.queueDownload(pb.authStore.model.id, fileKey);
       });
       HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(

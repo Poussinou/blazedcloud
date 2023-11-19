@@ -1,10 +1,13 @@
 import 'package:blazedcloud/constants.dart';
+import 'package:blazedcloud/controllers/download_controller.dart';
+import 'package:blazedcloud/controllers/upload_controller.dart';
 import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/pocketbase/authstore.dart';
 import 'package:blazedcloud/pages/dashboard.dart';
 import 'package:blazedcloud/pages/login/login.dart';
 import 'package:blazedcloud/pages/login/signup.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -12,11 +15,18 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:workmanager/workmanager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
+
+  await Workmanager().initialize(
+      callbackDispatcher, // The top level function, aka callbackDispatcher
+      isInDebugMode:
+          kDebugMode // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+      );
 
   runApp(const MyApp());
 }
@@ -70,6 +80,28 @@ final _router = GoRouter(
     ),
   ],
 );
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    logger.d("Native called background task: $task");
+
+    if (task == "download") {
+      return await DownloadController.startDownload(inputData?['uid'],
+          inputData?['fileKey'], inputData?['token'], inputData?['exportDir']);
+    } else if (task == "upload") {
+      return await UploadController.startUpload(
+          inputData?['uid'],
+          inputData?['localPath'],
+          inputData?['localName'],
+          inputData?['size'],
+          inputData?['s3Directory'],
+          inputData?['token']);
+    }
+
+    return Future.value(true);
+  });
+}
 
 class LandingContent extends StatelessWidget {
   const LandingContent({super.key});

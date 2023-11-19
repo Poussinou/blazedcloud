@@ -21,6 +21,15 @@ class DownloadState {
         errorMessage: errorMessage,
         downloadKey: '',
       );
+  factory DownloadState.fromJson(Map<String, dynamic> json) {
+    return DownloadState(
+      isDownloading: json['isDownloading'] ?? false,
+      isError: json['isError'] ?? false,
+      errorMessage: json['errorMessage'],
+      progress: json['progress'] ?? 0.0,
+      downloadKey: json['downloadKey'] ?? '',
+    );
+  }
   factory DownloadState.idle() => DownloadState(
         isDownloading: false,
         isError: false,
@@ -39,6 +48,16 @@ class DownloadState {
     isDownloading = false;
     this.errorMessage = errorMessage;
     logger.e(errorMessage);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'isDownloading': isDownloading,
+      'isError': isError,
+      'errorMessage': errorMessage,
+      'progress': progress,
+      'downloadKey': downloadKey,
+    };
   }
 
   void updateProgress(double newProgress) {

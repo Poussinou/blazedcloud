@@ -1,11 +1,18 @@
+import 'dart:isolate';
+
 import 'package:blazedcloud/controllers/download_controller.dart';
 import 'package:blazedcloud/controllers/upload_controller.dart';
+import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:blazedcloud/models/transfers/upload_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final downloadControllerProvider = Provider<DownloadController>((ref) {
   return DownloadController(ref);
+});
+
+final downloadReceivePortProvider = Provider<ReceivePort>((ref) {
+  return ReceivePort();
 });
 
 final downloadStateProvider =
@@ -15,6 +22,10 @@ final downloadStateProvider =
 
 final uploadControllerProvider = Provider<UploadController>((ref) {
   return UploadController(ref);
+});
+
+final uploadReceivePortProvider = Provider<ReceivePort>((ref) {
+  return ReceivePort();
 });
 
 final uploadStateProvider =
@@ -36,6 +47,18 @@ class DownloadStateNotifier extends StateNotifier<List<DownloadState>> {
     updatedStates[index] = downloadState;
     state = updatedStates;
   }
+
+  void updateDownloadStateByKey(String key, DownloadState downloadState) {
+    final index = state.indexWhere((element) => element.downloadKey == key);
+    if (index != -1) {
+      updateDownloadState(index, downloadState);
+    } else {
+      logger.i('Download state not found: $key');
+
+      // Add the download state if it doesn't exist
+      addDownload(downloadState);
+    }
+  }
 }
 
 class UploadStateNotifier extends StateNotifier<List<UploadState>> {
@@ -51,5 +74,17 @@ class UploadStateNotifier extends StateNotifier<List<UploadState>> {
     final updatedStates = List.of(state);
     updatedStates[index] = uploadState;
     state = updatedStates;
+  }
+
+  void updateUploadStateByKey(String key, UploadState uploadState) {
+    final index = state.indexWhere((element) => element.uploadKey == key);
+    if (index != -1) {
+      updateUploadState(index, uploadState);
+    } else {
+      logger.i('Upload state not found: $key');
+
+      // Add the upload state if it doesn't exist
+      addUpload(uploadState);
+    }
   }
 }

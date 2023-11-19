@@ -54,7 +54,7 @@ void downloadItem(String fileKey, DownloadController downloadController,
     if (!granted) {
       promptForDownloadDirectory(context);
     } else if (granted) {
-      downloadController.startDownload(pb.authStore.model.id, fileKey);
+      downloadController.queueDownload(pb.authStore.model.id, fileKey);
       HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
