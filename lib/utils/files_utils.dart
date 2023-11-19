@@ -152,16 +152,43 @@ FileType getFileType(String fileName) {
       fileName.endsWith('.jpeg') ||
       fileName.endsWith('.png') ||
       fileName.endsWith('.hevc') ||
+      fileName.endsWith('.heif') ||
+      fileName.endsWith('.webp') ||
+      fileName.endsWith('.bmp') ||
+      fileName.endsWith('.svg') ||
+      fileName.endsWith('.ico') ||
+      fileName.endsWith('.tif') ||
+      fileName.endsWith('.tiff') ||
+      fileName.endsWith('.jfif') ||
       fileName.endsWith('.gif')) {
     return FileType.image;
   } else if (fileName.endsWith('.mp4') ||
       fileName.endsWith('.avi') ||
+      fileName.endsWith('.mov') ||
+      fileName.endsWith('.wmv') ||
+      fileName.endsWith('.flv') ||
+      fileName.endsWith('.webm') ||
+      fileName.endsWith('.mpeg') ||
+      fileName.endsWith('.mpg') ||
+      fileName.endsWith('.m4v') ||
+      fileName.endsWith('.3gp') ||
+      fileName.endsWith('.3g2') ||
       fileName.endsWith('.mkv')) {
     return FileType.video;
   } else if (fileName.endsWith('.mp3') ||
       fileName.endsWith('.wav') ||
       fileName.endsWith('.flac') ||
       fileName.endsWith('.m4a') ||
+      fileName.endsWith('.ogg') ||
+      fileName.endsWith('.oga') ||
+      fileName.endsWith('.wma') ||
+      fileName.endsWith('.opus') ||
+      fileName.endsWith('.weba') ||
+      fileName.endsWith('.mka') ||
+      fileName.endsWith('.ape') ||
+      fileName.endsWith('.aiff') ||
+      fileName.endsWith('.aif') ||
+      fileName.endsWith('.aifc') ||
       fileName.endsWith('.aac')) {
     return FileType.audio;
   } else if (fileName.endsWith('.doc') ||
