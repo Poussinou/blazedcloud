@@ -37,7 +37,10 @@ class FilesPage extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
             title: ref.watch(currentDirectoryProvider) != getStartingDirectory()
-                ? Text(ref.watch(currentDirectoryProvider))
+                ? Text(ref
+                    .watch(currentDirectoryProvider)
+                    .split("/")
+                    .lastWhere((element) => element.isNotEmpty))
                 : const Text('Blazed Explorer'),
 
             // if current directory isn't root, show a back button
