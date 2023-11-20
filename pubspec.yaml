@@ -58,6 +58,7 @@ dependencies:
   url_launcher: ^6.2.1
   badges: ^3.1.2
   workmanager: ^0.5.2
+  local_auth: ^2.1.7
 
 dev_dependencies:
   flutter_test:
@@ -86,6 +87,7 @@ flutter_launcher_icons:
 flutter:
   assets:
     - assets/lottie/fire.json
+    - assets/lottie/locked.json
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

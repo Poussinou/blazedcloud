@@ -4,8 +4,10 @@ import 'package:blazedcloud/controllers/upload_controller.dart';
 import 'package:blazedcloud/log.dart';
 import 'package:blazedcloud/models/pocketbase/authstore.dart';
 import 'package:blazedcloud/pages/dashboard.dart';
+import 'package:blazedcloud/pages/login/locked.dart';
 import 'package:blazedcloud/pages/login/login.dart';
 import 'package:blazedcloud/pages/login/signup.dart';
+import 'package:blazedcloud/providers/setting_providers.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -148,14 +150,31 @@ class LandingPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // check server health then check if user is logged in
     return ref.watch(healthCheckProvider).when(
       data: (data) {
         return ref.watch(savedAuthProvider).when(
           data: (data) {
             if (data) {
               logger.d("Token is valid. User: ${pb.authStore.model.id}");
-              return const Dashboard();
+              return ref.watch(isPrefsLoaded).when(data: (isLoaded) {
+                if (isLoaded) {
+                  return ref.read(isBiometricEnabledProvider)
+                      ? ref.read(isAuthenticatedProvider)
+                          ? const Dashboard()
+                          : const LockedScreen()
+                      : const Dashboard();
+                }
+                return const Dashboard();
+              }, error: (err, stack) {
+                logger.e("Error loading prefs: $err");
+                return const Dashboard();
+              }, loading: () {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              });
             } else {
               return const LandingContent();
             }

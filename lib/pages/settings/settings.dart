@@ -7,6 +7,7 @@ import 'package:blazedcloud/pages/settings/custom_babstrap/icon_style.dart'
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsGroup.dart';
 import 'package:blazedcloud/pages/settings/custom_babstrap/settingsItem.dart';
 import 'package:blazedcloud/providers/pb_providers.dart';
+import 'package:blazedcloud/providers/setting_providers.dart';
 import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +16,46 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
+
+  CustomSettingsItem? biometricSetting(WidgetRef ref) {
+    return ref.watch(isBiometricAvailableProvider).when(data: (isAvailable) {
+      if (isAvailable) {
+        return CustomSettingsItem(
+          onTap: () async {
+            ref.read(isBiometricEnabledProvider.notifier).state =
+                !ref.read(isBiometricEnabledProvider);
+            final SharedPreferences buttonPrefs =
+                await SharedPreferences.getInstance();
+            await buttonPrefs.setBool(
+                'biometric', !ref.read(isBiometricEnabledProvider));
+          },
+          icons: CupertinoIcons.lock_shield_fill,
+          trailing: Switch(
+            value: ref.watch(isBiometricEnabledProvider),
+            onChanged: (value) async {
+              ref.read(isBiometricEnabledProvider.notifier).state = value;
+              final SharedPreferences buttonPrefs =
+                  await SharedPreferences.getInstance();
+              await buttonPrefs.setBool('biometric', value);
+            },
+          ),
+          iconStyle: babstrap.IconStyle(),
+          title: 'Require biometrics to open app',
+        );
+      }
+      return null;
+    }, error: (err, stacktrace) {
+      logger.e('Error checking biometric availability: $err');
+      return null;
+    }, loading: () {
+      return null;
+    });
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,6 +75,7 @@ class SettingsScreen extends ConsumerWidget {
               CustomSettingsGroup(
                 items: [
                   downloadLocationChangeSetting(context),
+                  biometricSetting(ref)
                 ],
               ),
               CustomSettingsGroup(
@@ -48,8 +86,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               CustomSettingsGroup(
                 items: [
-                  githubSetting(context),
-                  githubBackendSetting(context),
+                  githubSetting(),
+                  githubBackendSetting(),
                   signOutSetting(context),
                   deleteAccountSetting(context),
                 ],
@@ -169,7 +207,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  CustomSettingsItem githubBackendSetting(BuildContext context) {
+  CustomSettingsItem githubBackendSetting() {
     return CustomSettingsItem(
       onTap: () {
         final url = Uri.parse("https://github.com/TheRedSpy15/blazed-cloud-pb");
@@ -188,7 +226,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  CustomSettingsItem githubSetting(BuildContext context) {
+  CustomSettingsItem githubSetting() {
     return CustomSettingsItem(
       onTap: () {
         final url = Uri.parse("https://github.com/TheRedSpy15/blazedcloud");
