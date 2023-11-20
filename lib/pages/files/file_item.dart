@@ -9,6 +9,7 @@ import 'package:blazedcloud/utils/files_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final isFileOffline =
     FutureProvider.autoDispose.family<bool, String>((ref, filename) async {
@@ -54,7 +55,7 @@ void downloadItem(String fileKey, DownloadController downloadController,
     if (!granted) {
       promptForDownloadDirectory(context);
     } else if (granted) {
-      downloadController.startDownload(pb.authStore.model.id, fileKey);
+      downloadController.queueDownload(pb.authStore.model.id, fileKey);
       HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -65,28 +66,59 @@ void downloadItem(String fileKey, DownloadController downloadController,
   });
 }
 
+void openFromOffline(String fileKey, WidgetRef ref) {
+  getOfflineFile(fileKey).then((file) {
+    try {
+      logger.i('Opening file: ${file.path}');
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        SnackBar(
+          content: Text('Opening file: ${getFileName(fileKey)}'),
+        ),
+      );
+      openFile(file);
+    } catch (e) {
+      logger.e('Error opening file: $e');
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        SnackBar(
+          content: Text('Error opening file: $e'),
+        ),
+      );
+    }
+  });
+}
+
+void openFromUrl(String fileKey, WidgetRef ref) {
+  logger.i("Attempting to open file from url \n $fileKey");
+
+  getFileLink(pb.authStore.model.id, fileKey, pb.authStore.token).then((link) {
+    canLaunchUrl(Uri.parse(link)).then((canLaunch) {
+      if (canLaunch) {
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          const SnackBar(
+            content: Text('Opening in browser...'),
+          ),
+        );
+        launchUrl(Uri.parse(link));
+      } else {
+        logger.e('Could not launch url: $link');
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to open. Please try saving the file first'),
+          ),
+        );
+      }
+    });
+  });
+}
+
 void openItem(String fileKey, WidgetRef ref) {
   isFileSavedOffline(fileKey).then((isOffline) {
     if (isOffline &&
         !isFileBeingDownloaded(fileKey, ref.read(downloadStateProvider))) {
-      getOfflineFile(fileKey).then((file) {
-        try {
-          logger.i('Opening file: ${file.path}');
-          ScaffoldMessenger.of(ref.context).showSnackBar(
-            SnackBar(
-              content: Text('Opening file: ${getFileName(fileKey)}'),
-            ),
-          );
-          openFile(file);
-        } catch (e) {
-          logger.e('Error opening file: $e');
-          ScaffoldMessenger.of(ref.context).showSnackBar(
-            SnackBar(
-              content: Text('Error opening file: $e'),
-            ),
-          );
-        }
-      });
+      openFromOffline(fileKey, ref);
+    } else if (getFileType(fileKey) == FileType.image ||
+        getFileType(fileKey) == FileType.video) {
+      openFromUrl(fileKey, ref);
     } else {
       logger.i('File $fileKey is not available offline');
       ScaffoldMessenger.of(ref.context).showSnackBar(
