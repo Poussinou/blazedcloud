@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 class CustomSettingsGroup extends StatelessWidget {
   final String? settingsGroupTitle;
   final TextStyle? settingsGroupTitleStyle;
-  final List<CustomSettingsItem> items;
+  final List<CustomSettingsItem?> items;
   // Icons size
   final double? iconItemSize;
 
@@ -54,6 +54,9 @@ class CustomSettingsGroup extends StatelessWidget {
               },
               itemCount: items.length,
               itemBuilder: (BuildContext context, int index) {
+                if (items[index] == null) {
+                  return const SizedBox.shrink();
+                }
                 return items[index];
               },
               shrinkWrap: true,

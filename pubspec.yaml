@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 
 # format: x.x.x+x0x0x
-version: 1.0.9+10009
+version: 1.1.0+10100
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -57,6 +57,9 @@ dependencies:
   mime: ^1.0.4
   dio: ^5.3.3
   url_launcher: ^6.2.1
+  badges: ^3.1.2
+  workmanager: ^0.5.2
+  local_auth: ^2.1.7
 
 dev_dependencies:
   flutter_test:
@@ -85,6 +88,7 @@ flutter_launcher_icons:
 flutter:
   assets:
     - assets/lottie/fire.json
+    - assets/lottie/locked.json
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

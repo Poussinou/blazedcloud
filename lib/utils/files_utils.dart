@@ -7,7 +7,7 @@ import 'package:blazedcloud/models/files_api/list_files.dart';
 import 'package:blazedcloud/models/transfers/download_state.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:open_filex/open_filex.dart';
 
 /// Check if the user has granted access to the download directory
@@ -99,6 +99,8 @@ List<String> fuzzySearch(String query, List<String> list) {
 
 /// Get the download directory from Hive
 Future<String> getExportDirectoryFromHive() async {
+  await Hive.initFlutter();
+
   // check if Hive has a download directory saved
   final box = await Hive.openBox<String>('files');
   final downloadDirectory = box.get('downloadDirectory');
@@ -150,16 +152,43 @@ FileType getFileType(String fileName) {
       fileName.endsWith('.jpeg') ||
       fileName.endsWith('.png') ||
       fileName.endsWith('.hevc') ||
+      fileName.endsWith('.heif') ||
+      fileName.endsWith('.webp') ||
+      fileName.endsWith('.bmp') ||
+      fileName.endsWith('.svg') ||
+      fileName.endsWith('.ico') ||
+      fileName.endsWith('.tif') ||
+      fileName.endsWith('.tiff') ||
+      fileName.endsWith('.jfif') ||
       fileName.endsWith('.gif')) {
     return FileType.image;
   } else if (fileName.endsWith('.mp4') ||
       fileName.endsWith('.avi') ||
+      fileName.endsWith('.mov') ||
+      fileName.endsWith('.wmv') ||
+      fileName.endsWith('.flv') ||
+      fileName.endsWith('.webm') ||
+      fileName.endsWith('.mpeg') ||
+      fileName.endsWith('.mpg') ||
+      fileName.endsWith('.m4v') ||
+      fileName.endsWith('.3gp') ||
+      fileName.endsWith('.3g2') ||
       fileName.endsWith('.mkv')) {
     return FileType.video;
   } else if (fileName.endsWith('.mp3') ||
       fileName.endsWith('.wav') ||
       fileName.endsWith('.flac') ||
       fileName.endsWith('.m4a') ||
+      fileName.endsWith('.ogg') ||
+      fileName.endsWith('.oga') ||
+      fileName.endsWith('.wma') ||
+      fileName.endsWith('.opus') ||
+      fileName.endsWith('.weba') ||
+      fileName.endsWith('.mka') ||
+      fileName.endsWith('.ape') ||
+      fileName.endsWith('.aiff') ||
+      fileName.endsWith('.aif') ||
+      fileName.endsWith('.aifc') ||
       fileName.endsWith('.aac')) {
     return FileType.audio;
   } else if (fileName.endsWith('.doc') ||

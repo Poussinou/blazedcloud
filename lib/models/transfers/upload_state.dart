@@ -20,6 +20,15 @@ class UploadState {
         errorMessage: errorMessage,
         uploadKey: '',
       );
+  factory UploadState.fromJson(Map<String, dynamic> json) {
+    return UploadState(
+      isUploading: json['isUploading'] ?? false,
+      isError: json['isError'] ?? false,
+      errorMessage: json['errorMessage'],
+      progress: json['progress'] ?? 0.0,
+      uploadKey: json['uploadKey'] ?? '',
+    );
+  }
   factory UploadState.idle() => UploadState(
         isUploading: false,
         isError: false,
@@ -39,7 +48,18 @@ class UploadState {
 
   void setError(String errorMessage) {
     isError = true;
+    isUploading = false;
     this.errorMessage = errorMessage;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'isUploading': isUploading,
+      'isError': isError,
+      'errorMessage': errorMessage,
+      'progress': progress,
+      'uploadKey': uploadKey,
+    };
   }
 
   void updateProgress(double newProgress) {
