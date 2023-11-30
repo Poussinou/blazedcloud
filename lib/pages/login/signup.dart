@@ -76,7 +76,6 @@ class SignUpScreen extends ConsumerWidget {
                   "password": passwordController.text,
                   "passwordConfirm": passwordController.text,
                   "active": false,
-                  "capacity_gigs": 5,
                   "usingPersonalEncryption": false
                 };
 
