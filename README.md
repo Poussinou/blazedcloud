@@ -10,7 +10,6 @@
 
 Simple, minimalistic file backup provider built with Flutter and Pocketbase
 
-
 ## Our shamelessly ChatGPT generated description:
 
 🌐 Welcome to Blazed Cloud, your go-to cloud storage solution for a seamless and secure file management experience! 🚀
@@ -19,9 +18,6 @@ Blazed Cloud is not just another cloud storage app; it's a commitment to simplic
 
 🔐 Unparalleled Security with AES-256 Encryption:
 Rest easy knowing that your files are safeguarded with military-grade AES-256 encryption. Blazed Cloud takes your privacy seriously, ensuring that only you have access to your valuable data.
-
-🌍 Open Source, from Client to Server:
-Transparency is key, and that's why Blazed Cloud is entirely open source. Not just the client code, but even the server code is public for scrutiny. We believe in giving you complete visibility into how your data is handled and secured.
 
 🚀 Simple and Intuitive Design:
 Blazed Cloud is designed with simplicity in mind. No unnecessary frills, no confusing features—just a clean interface that gives you exactly what you need. Effortlessly upload, download, and manage your files with a few taps.

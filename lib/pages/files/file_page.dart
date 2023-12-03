@@ -4,7 +4,7 @@ import 'package:blazedcloud/models/files_api/search_delagate.dart';
 import 'package:blazedcloud/models/pocketbase/user.dart';
 import 'package:blazedcloud/pages/files/file_item.dart';
 import 'package:blazedcloud/pages/files/folder_item.dart';
-import 'package:blazedcloud/pages/settings/usage_card.dart';
+import 'package:blazedcloud/pages/transfers/usage_card.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';

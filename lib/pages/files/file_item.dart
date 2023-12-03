@@ -1,7 +1,7 @@
 import 'package:blazedcloud/constants.dart';
 import 'package:blazedcloud/controllers/download_controller.dart';
 import 'package:blazedcloud/log.dart';
-import 'package:blazedcloud/pages/settings/usage_card.dart';
+import 'package:blazedcloud/pages/transfers/usage_card.dart';
 import 'package:blazedcloud/providers/files_providers.dart';
 import 'package:blazedcloud/providers/transfers_providers.dart';
 import 'package:blazedcloud/services/files_api.dart';
